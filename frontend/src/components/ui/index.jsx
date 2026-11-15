@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Cresteria } from '../decor/Decor.jsx';
 import { ChevronLeft, ChevronRight, X, Loader, TriangleAlert, CircleAlert, CircleCheck, Info } from 'lucide-react';
 
 /* ---------- Botón ---------- */
@@ -77,6 +78,7 @@ export function Panel({ titulo, icon: Icon, acciones, children, className = '', 
         </h2>
         {acciones && <div className="flex items-center gap-2">{acciones}</div>}
       </header>
+      {!claro && <Cresteria />}
       <div className={`flex-1 ${cuerpo}`}>{children}</div>
     </section>
   );
@@ -121,6 +123,7 @@ export function Modal({ abierto, onClose, titulo, children, ancho = 'max-w-lg', 
             <X className="size-5" />
           </button>
         </header>
+        <Cresteria className="no-imprimir" />
         <div className="flex-1 overflow-y-auto p-5">{children}</div>
         {pie && <footer className="no-imprimir flex flex-wrap justify-end gap-2 border-t border-borde px-5 py-3">{pie}</footer>}
       </div>

@@ -25,7 +25,7 @@ export function Layout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onMenu={() => setMenu(true)} onGuia={() => setGuia(true)} placeholder={PLACEHOLDERS[pathname]} />
         <main className="relative flex-1 px-4 pt-2 pb-8 sm:px-6 lg:px-8">
-          <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-36 w-[440px] md:block lg:right-8" />
+          <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-40 w-[440px] xl:block lg:right-8" />
           {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : config ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
         </main>
         <BandaGreca />
