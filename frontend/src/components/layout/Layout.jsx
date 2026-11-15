@@ -26,7 +26,10 @@ export function Layout() {
         <Topbar onMenu={() => setMenu(true)} onGuia={() => setGuia(true)} placeholder={PLACEHOLDERS[pathname]} />
         <main className="relative flex-1 px-4 pt-2 pb-8 sm:px-6 lg:px-8">
           <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-40 w-[440px] xl:block lg:right-8" />
-          {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : config ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
+          {/* El contenido va sobre la ilustración del encabezado. */}
+          <div className="relative z-[1]">
+            {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : config ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
+          </div>
         </main>
         <BandaGreca />
       </div>
