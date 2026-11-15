@@ -18,7 +18,7 @@ function useClickFuera(onFuera) {
   return ref;
 }
 
-const pill = 'flex h-11 items-center gap-2 rounded-full border border-borde bg-superficie px-4 text-sm font-medium text-texto';
+const pill = 'flex h-11 items-center gap-2 whitespace-nowrap rounded-full border border-borde bg-superficie px-4 text-sm font-medium text-texto';
 
 export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…' }) {
   const { sucursales, sucursal, setSucursalId, config, modoOscuro, toggleModo, version } = useApp();
@@ -71,10 +71,10 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
         <button type="button" onClick={onMenu} className="rounded-lg p-2 text-primario hover:bg-superficie-2 lg:hidden" aria-label="Abrir menú">
           <Menu className="size-6" />
         </button>
-        <Link to="/identidad" className="group flex items-center gap-3 pr-2" title="Editar identidad visual">
+        <Link to="/identidad" className="group flex min-w-0 items-center gap-3 pr-2" title="Editar identidad visual">
           <Logo variante="figura" className="hidden w-12 text-[var(--c-tinta)] sm:block" />
           <span className="hidden h-9 w-px bg-borde sm:block" />
-          <span className="font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
+          <span className="truncate font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
           <Pencil className="size-4 text-suave group-hover:text-primario" />
         </Link>
 
