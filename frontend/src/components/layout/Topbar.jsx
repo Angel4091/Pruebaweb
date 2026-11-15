@@ -4,7 +4,7 @@ import { Store, Search, CalendarDays, Bell, Sun, Moon, BookOpen, Pencil, Chevron
 import { useApp } from '../../context/AppContext.jsx';
 import { generalService } from '../../services/index.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
-import { PiramideLogo, DivisorRombos } from '../decor/Decor.jsx';
+import { Logo, DivisorRombos } from '../decor/Decor.jsx';
 import { fechaLarga, turnoDe, iniciales } from '../../utils/format.js';
 
 /** Cierra un menú desplegable al hacer clic fuera. */
@@ -72,7 +72,7 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           <Menu className="size-6" />
         </button>
         <Link to="/identidad" className="group flex items-center gap-3 pr-2" title="Editar identidad visual">
-          <PiramideLogo className="hidden w-12 text-secundario sm:block" />
+          <Logo variante="figura" className="hidden w-12 text-[var(--c-tinta)] sm:block" />
           <span className="hidden h-9 w-px bg-borde sm:block" />
           <span className="font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
           <Pencil className="size-4 text-suave group-hover:text-primario" />

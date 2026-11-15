@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Palette, Image, Upload, Droplet, Type, Eye, Settings, Save, RotateCcw, Trash2 } from 'lucide-react';
+import { Palette, Upload, Droplet, Type, Eye, Settings, Save, RotateCcw, Trash2 } from 'lucide-react';
 import { useApp, aplicarTema } from '../context/AppContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { generalService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { Panel, Field, Button, Switch, Cargando } from '../components/ui/index.jsx';
-import { PiramideLogo, DivisorRombos } from '../components/decor/Decor.jsx';
+import { Logo, DivisorRombos } from '../components/decor/Decor.jsx';
 
 const COLORES = [
   ['primario', 'Primario'],
@@ -86,7 +86,7 @@ export default function IdentidadVisual() {
               <p className="mb-2 font-display font-medium text-texto">Logo del restaurante</p>
               <div className="flex flex-wrap items-center gap-4">
                 <div className="grid h-28 w-full max-w-72 place-items-center rounded-xl border-2 border-dashed border-acento/50 bg-superficie-2">
-                  {borrador.logo ? <img src={borrador.logo} alt="Logo actual" className="max-h-24 max-w-[90%] object-contain" /> : <Image className="size-14 text-suave/60" strokeWidth={1.4} />}
+                  <Logo variante="completo" personalizado={borrador.logo} className="h-24 max-w-[90%] text-texto" titulo="Logo actual" />
                 </div>
                 <div className="flex flex-col items-center gap-1 text-center">
                   <input ref={inputLogo} type="file" accept="image/png,image/jpeg" className="hidden" onChange={subirLogo} />
@@ -100,7 +100,7 @@ export default function IdentidadVisual() {
                   </p>
                   {borrador.logo && (
                     <button type="button" onClick={() => setBorrador((b) => ({ ...b, logo: null }))} className="flex items-center gap-1 text-xs text-error hover:underline">
-                      <Trash2 className="size-3" /> Quitar logo
+                      <Trash2 className="size-3" /> Usar el logo de Orígenes SV
                     </button>
                   )}
                 </div>
@@ -212,7 +212,7 @@ function VistaPrevia({ config }) {
         </g>
       </svg>
       <div className="relative flex max-w-[55%] flex-col items-center px-6 py-8 text-center sm:px-10">
-        {config.logo ? <img src={config.logo} alt="" className="mb-2 max-h-16 object-contain" /> : <PiramideLogo className="mb-2 w-20 text-primario" strokeWidth={2.6} />}
+        <Logo variante="figura" personalizado={config.logo} className="mb-2 max-h-24 w-24 text-primario" titulo="" />
         <p className="font-display text-2xl leading-tight font-bold tracking-wide uppercase" style={{ color: colores.primario, fontFamily: fuentes.principal }}>
           {config.nombre || 'Tu restaurante'}
         </p>

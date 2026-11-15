@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { House, ShoppingCart, Package, Truck, Calculator, Users, TrendingUp, Palette, X } from 'lucide-react';
-import { PiramideLogo, Greca } from '../decor/Decor.jsx';
-import { useApp } from '../../context/AppContext.jsx';
+import { Logo, Greca } from '../decor/Decor.jsx';
 
 /** Módulos del sistema; se reutiliza en la guía y en los accesos rápidos. */
 // eslint-disable-next-line react-refresh/only-export-components
@@ -17,19 +16,14 @@ export const MODULOS = [
 ];
 
 export function Sidebar({ abierto, onClose }) {
-  const { config } = useApp();
   return (
     <>
       {abierto && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} aria-hidden="true" />}
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-[132px] flex-col bg-sidebar text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${abierto ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="flex h-[92px] items-center justify-center">
-          {config?.logo ? (
-            <img src={config.logo} alt={config.nombre} className="max-h-16 max-w-[96px] rounded-lg object-contain" />
-          ) : (
-            <PiramideLogo className="w-[78px] text-secundario" />
-          )}
+        <div className="flex h-[108px] items-center justify-center">
+          <Logo variante="figura" className="max-h-[84px] w-[88px] text-secundario" />
           <button type="button" onClick={onClose} className="absolute top-3 right-2 rounded p-1 hover:bg-white/10 lg:hidden" aria-label="Cerrar menú">
             <X className="size-5" />
           </button>
@@ -52,7 +46,7 @@ export function Sidebar({ abierto, onClose }) {
             </NavLink>
           ))}
         </nav>
-        <div className="h-28 shrink-0 text-white/25">
+        <div className="h-32 shrink-0 text-secundario/30">
           <Greca id="sidebar-greca" />
         </div>
       </aside>
