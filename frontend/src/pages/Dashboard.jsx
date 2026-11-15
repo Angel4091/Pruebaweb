@@ -6,7 +6,8 @@ import { generalService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { StatCard, Variacion, Badge, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { LineChart, Barra } from '../components/charts/Charts.jsx';
-import { FoodArt } from '../components/decor/FoodArt.jsx';
+import { FotoProducto } from '../components/decor/FoodArt.jsx';
+import { EstelaMaya } from '../components/decor/EstelaMaya.jsx';
 import { money, saludo } from '../utils/format.js';
 
 const horaCorta = (h) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
@@ -29,7 +30,9 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader titulo={saludo()} subtitulo="Resumen de operación" />
+      <PageHeader titulo={saludo()} subtitulo="Resumen de operación">
+        <EstelaMaya className="xl:mr-[440px]" />
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={ChartColumn} tono="azul" titulo="Ventas del día" valor={money(kpis.ventas.valor)} detalle={<Variacion valor={kpis.ventas.variacion} />} />
@@ -105,7 +108,7 @@ export default function Dashboard() {
             <ul className="divide-y divide-borde">
               {masVendidos.map((p) => (
                 <li key={p.id} className="flex items-center gap-4 py-3">
-                  <FoodArt arte={p.arte} className="size-14 shrink-0" />
+                  <FotoProducto producto={p} className="size-14 shrink-0 rounded-full ring-2 ring-secundario/50" />
                   <span className="flex-1 text-texto">{p.nombre}</span>
                   <span className="font-display font-semibold text-texto">{p.cantidad} und.</span>
                 </li>
