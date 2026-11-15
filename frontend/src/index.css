@@ -21,6 +21,8 @@
   --c-naranja: #e8833a;
   --c-sidebar: var(--c-primario);
   --c-tinta-decor: #e7c98f;
+  /* Color de trazos e íconos: el primario en claro, un azul aclarado en oscuro. */
+  --c-tinta: var(--c-primario);
 
   --f-principal: 'Poppins', system-ui, sans-serif;
   --f-secundaria: 'Roboto', system-ui, sans-serif;
@@ -38,6 +40,11 @@
   --c-borde: #26355a;
   --c-sidebar: #08183a;
   --c-tinta-decor: #3a4a6e;
+  --c-tinta: #9db9f2;
+}
+
+[data-theme='dark'] svg.text-primario {
+  color: var(--c-tinta);
 }
 
 [data-sombras='off'] {
@@ -80,6 +87,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+@layer components {
 /* Tarjeta base: superficie cálida, borde fino y sombra suave. */
 .card {
   background: var(--c-superficie);
@@ -131,6 +139,7 @@ body {
 .campo:focus {
   border-color: var(--c-acento);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-acento) 22%, transparent);
+}
 }
 
 :focus-visible {
