@@ -188,7 +188,7 @@ const empleados = [
 
 const configuracion = {
   nombre: 'Orígenes SV',
-  eslogan: 'Dos culturas, un mismo sabor',
+  eslogan: '¡Puchica, qué buen sabor!',
   logo: null,
   colores: {
     primario: '#0B2D6B',
