@@ -80,6 +80,12 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 | `components/charts` | Gráfica de líneas (con curvas suaves y tooltip), dona y barras en SVG, sin librerías externas. |
 | `components/decor` | Pirámide, greca, escena del encabezado e ilustraciones SVG de platillos e insumos. |
 
+**Fotos:** `FotoProducto` y `FotoInsumo` (`components/decor/FoodArt.jsx`) cargan `public/img/platillos/<id>.jpg` y `public/img/insumos/<id>.jpg`, o la foto que se subió al crear el platillo (campo `imagen`, base64 de hasta 1 MB). Si la foto no existe o falla, muestran una ilustración SVG.
+
+**Logo:** `Logo` (`components/decor/Decor.jsx`) usa el PNG transparente del logo como máscara CSS, así se pinta con cualquier color de la marca (dorado en el menú, azul en la barra superior). Si en Identidad Visual se sube un logo propio, se usa ese.
+
+**Calendario maya:** `utils/calendarioMaya.js` convierte la fecha al día juliano y aplica la correlación GMT (584283) para obtener la Cuenta Larga, el Tzolk'in (260 días) y el Haab' (365 días). `NumeroMaya` dibuja los numerales en base 20 (punto = 1, barra = 5, concha = 0). Valores de control: 21/12/2012 → 13.0.0.0.0, 4 Ajaw 3 K'ank'in.
+
 **Tema:** los colores viven en variables CSS (`--c-primario`, `--c-secundario`, …) que Tailwind expone como clases (`bg-primario`, `text-texto`). El módulo Identidad Visual las modifica en tiempo real.
 
 ## 4. Requisitos técnicos del proyecto y dónde se cumplen

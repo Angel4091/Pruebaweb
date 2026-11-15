@@ -19,6 +19,12 @@ Proyecto de Cátedra de **Programación Web — Ciclo 02, 2026**. Corresponde al
 | **Pronóstico** | Consumo proyectado por insumo con promedio móvil, días de cobertura, alertas de faltantes y **órdenes de compra sugeridas** por proveedor. |
 | **Identidad visual** | Logo, nombre, eslogan, paleta de colores, tipografías, sombras, bordes, animaciones y modo oscuro, aplicados en vivo a toda la app. |
 
+### Identidad maya
+
+El diseño toma elementos de la cultura maya: el logo de Orígenes SV (*¡Puchica, qué buen sabor!*), un templo con crestería, la ceiba sagrada y el quetzal en el encabezado, la greca escalonada (*xicalcoliuhqui*) en el menú y al pie de página, crestería escalonada bajo los encabezados, y en el inicio una **estela con la fecha de hoy en el calendario maya**: Cuenta Larga en numerales de puntos y barras, Tzolk'in y Haab' (correlación GMT 584283).
+
+Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias libres; ver [créditos de imágenes](docs/creditos-imagenes.md).
+
 ## 🛠️ Tecnologías
 
 - **Frontend:** React 19 + Vite, React Router, Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`, `useContext`, hooks propios), Tailwind CSS 4, íconos Lucide.
