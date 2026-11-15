@@ -85,6 +85,9 @@ const insumosBase = [
   ['ins-vineta', 'Viñeta', 'und', 50, 0.01, 'prov-empaques', 500, 300, 'empaque'],
 ];
 
+/** Insumos frescos que se dejan con poco stock para mostrar las alertas. */
+const BAJO_STOCK = ['ins-tomate', 'ins-chile', 'ins-queso'];
+
 const insumos = insumosBase.map(([id, nombre, unidad, stockMinimo, costoUnitario, proveedorId, sc, ssm, arte]) => ({
   id,
   nombre,
@@ -93,7 +96,9 @@ const insumos = insumosBase.map(([id, nombre, unidad, stockMinimo, costoUnitario
   costoUnitario,
   proveedorId,
   arte,
-  stock: { 'suc-central': sc, 'suc-sanmiguel': ssm },
+  stock: BAJO_STOCK.includes(id)
+    ? { 'suc-central': sc, 'suc-sanmiguel': ssm }
+    : { 'suc-central': sc * 4, 'suc-sanmiguel': ssm * 3 },
 }));
 
 const categorias = [
@@ -228,7 +233,7 @@ function generarHistorial(now) {
   const turnos = [];
   const horaActual = now.getHours();
 
-  for (let offset = 13; offset >= 0; offset -= 1) {
+  for (let offset = 14; offset >= 0; offset -= 1) {
     const dia = new Date(now);
     dia.setDate(dia.getDate() - offset);
     const fecha = dateKey(dia);
