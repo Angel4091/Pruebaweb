@@ -81,7 +81,7 @@ export default function Pronostico() {
             etiquetas={serieVisible.map((s) => s.fecha.slice(8) + '/' + s.fecha.slice(5, 7))}
             subetiquetas={serieVisible.map((s) => DIA[new Date(`${s.fecha}T12:00:00`).getDay()])}
             series={[
-              { nombre: 'Consumo real', color: 'var(--c-primario)', valores: serieVisible.map((s) => s.real) },
+              { nombre: 'Consumo real', color: 'var(--c-tinta)', valores: serieVisible.map((s) => s.real) },
               { nombre: 'Pronóstico', color: 'var(--c-secundario)', valores: serieVisible.map((s) => s.pronostico) },
             ]}
             formato={money}
@@ -99,7 +99,7 @@ export default function Pronostico() {
               <li key={c.id} className="grid grid-cols-[3rem_6.5rem_1fr_4.5rem] items-center gap-3">
                 <InsumoArt arte={c.arte} className="h-9 w-12" />
                 <span className="truncate text-texto">{c.nombre}</span>
-                <Barra porcentaje={((c.consumo7 * c.costoUnitario) / maxConsumo) * 100} color={i % 2 ? 'var(--c-secundario)' : 'var(--c-primario)'} />
+                <Barra porcentaje={((c.consumo7 * c.costoUnitario) / maxConsumo) * 100} color={i % 2 ? 'var(--c-secundario)' : 'var(--c-tinta)'} />
                 <span className="text-right font-display font-semibold text-texto">{qty(c.consumo7, c.unidad)}</span>
               </li>
             ))}

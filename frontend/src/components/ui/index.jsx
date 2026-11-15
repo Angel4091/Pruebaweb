@@ -27,7 +27,7 @@ export function Button({ variante = 'primario', className = '', icon: Icon, load
 
 /* ---------- Tarjeta de indicador (KPI) ---------- */
 const TONOS = {
-  azul: 'bg-acento/15 text-primario',
+  azul: 'bg-acento/15 text-[var(--c-tinta)]',
   dorado: 'bg-secundario/25 text-[#c98a12]',
   naranja: 'bg-naranja/20 text-naranja',
   verde: 'bg-exito/15 text-exito',
