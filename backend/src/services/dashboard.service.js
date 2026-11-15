@@ -24,9 +24,10 @@ export function obtenerDashboard(sucursalId) {
   const ticketHoy = ventasHoy.length ? round2(totalHoy / ventasHoy.length) : 0;
   const ticketAyer = ventasAyer.length ? round2(totalAyer / ventasAyer.length) : 0;
 
+  // Las horas que aún no llegan quedan en null para no dibujarlas como cero.
   const ventasPorHora = Array.from({ length: 13 }, (_, i) => 9 + i).map((hora) => ({
     hora,
-    total: round2(ventasHoy.filter((v) => new Date(v.fecha).getHours() === hora).reduce((a, v) => a + v.total, 0)),
+    total: hora > horaActual ? null : round2(ventasHoy.filter((v) => new Date(v.fecha).getHours() === hora).reduce((a, v) => a + v.total, 0)),
   }));
 
   const conteo = new Map();

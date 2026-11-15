@@ -25,7 +25,7 @@ export default function Dashboard() {
   if (loading && !data) return <Cargando />;
   if (error) return <ErrorBox error={error} onRetry={reload} />;
   const { kpis, ventasPorHora, masVendidos, ventasPorSucursal, cajas, alertas } = data;
-  const colorBarra = ['var(--c-primario)', 'var(--c-secundario)'];
+  const colorBarra = ['var(--c-tinta)', 'var(--c-secundario)'];
 
   return (
     <>
@@ -48,7 +48,16 @@ export default function Dashboard() {
           </div>
           <LineChart
             etiquetas={ventasPorHora.filter((_, i) => i % 2 === 0).map((v) => horaCorta(v.hora))}
-            series={[{ nombre: 'Ventas', color: 'var(--c-primario)', area: true, valores: ventasPorHora.filter((_, i) => i % 2 === 0).map((v, i) => round(v.total + (ventasPorHora[i * 2 + 1]?.total ?? 0))) }]}
+            series={[
+              {
+                nombre: 'Ventas',
+                color: 'var(--c-tinta)',
+                area: true,
+                valores: ventasPorHora
+                  .filter((_, i) => i % 2 === 0)
+                  .map((v, i) => (v.total === null ? null : round(v.total + (ventasPorHora[i * 2 + 1]?.total ?? 0)))),
+              },
+            ]}
             formato={money}
           />
           <p className="mt-1 text-xs text-suave">Cada punto suma las ventas de dos horas.</p>
