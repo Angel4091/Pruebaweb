@@ -74,7 +74,7 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
         <Link to="/identidad" className="group flex items-center gap-3 pr-2" title="Editar identidad visual">
           <PiramideLogo className="hidden w-12 text-secundario sm:block" />
           <span className="hidden h-9 w-px bg-borde sm:block" />
-          <span className="font-display text-lg font-bold tracking-wide text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
+          <span className="font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
           <Pencil className="size-4 text-suave group-hover:text-primario" />
         </Link>
 
