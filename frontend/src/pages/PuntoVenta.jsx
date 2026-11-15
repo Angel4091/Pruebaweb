@@ -167,7 +167,7 @@ export default function PuntoVenta() {
           {productos.loading && !productos.data && <Cargando />}
           <ErrorBox error={productos.error} onRetry={productos.reload} />
           {productos.data && visibles.length === 0 && <Vacio titulo="No hay platillos con ese filtro">Prueba otra búsqueda o categoría.</Vacio>}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+          <div className="-mr-2 grid grid-cols-2 gap-3 pr-2 sm:grid-cols-3 lg:grid-cols-4 xl:max-h-[460px] xl:overflow-y-auto 2xl:grid-cols-5">
             {visibles.map((p) => {
               const agotado = p.disponibles <= 0;
               return (
