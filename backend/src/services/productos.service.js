@@ -48,6 +48,16 @@ export function obtenerProducto(id, sucursalId) {
   return enriquecerProducto(prod, sucursalId);
 }
 
+/** Valida la foto de un producto: ruta pública /img/... o imagen PNG/JPG en base64 (máx. ~1 MB). */
+function validarImagen(imagen) {
+  if (imagen === undefined || imagen === null || imagen === '') return null;
+  if (typeof imagen !== 'string') throw new AppError('La foto del producto no es válida', 422);
+  if (imagen.startsWith('/img/')) return imagen;
+  if (!/^data:image\/(png|jpeg);base64,/.test(imagen)) throw new AppError('La foto debe ser una imagen PNG o JPG', 422);
+  if (imagen.length > 1.4 * 1024 * 1024) throw new AppError('La foto supera el máximo de 1 MB', 413);
+  return imagen;
+}
+
 function validarReceta(receta) {
   if (!Array.isArray(receta)) throw new AppError('La receta debe ser un arreglo de insumos', 422);
   const insumos = db.collection('insumos');
@@ -60,7 +70,7 @@ function validarReceta(receta) {
 
 export function crearProducto(data) {
   const {
-    nombre, precio, categoriaId, tipo = 'elaborado', descripcion = '', receta = [], costo = 0, stockMinimo = 0, arte = 'pupusa',
+    nombre, precio, categoriaId, tipo = 'elaborado', descripcion = '', receta = [], costo = 0, stockMinimo = 0, arte = 'pupusa', imagen,
   } = data;
   if (!['elaborado', 'reventa'].includes(tipo)) throw new AppError('El tipo debe ser elaborado o reventa', 422);
   if (!(Number(precio) > 0)) throw new AppError('El precio debe ser mayor que cero', 422);
@@ -73,6 +83,7 @@ export function crearProducto(data) {
     tipo,
     descripcion,
     arte,
+    imagen: validarImagen(imagen),
     activo: true,
     receta: tipo === 'elaborado' ? validarReceta(receta) : [],
   };
@@ -98,6 +109,7 @@ export function actualizarProducto(id, data) {
     prod.precio = round2(data.precio);
   }
   if (data.descripcion !== undefined) prod.descripcion = data.descripcion;
+  if (data.imagen !== undefined) prod.imagen = validarImagen(data.imagen);
   if (data.categoriaId !== undefined) prod.categoriaId = data.categoriaId;
   if (data.activo !== undefined) prod.activo = Boolean(data.activo);
   if (data.receta !== undefined && prod.tipo === 'elaborado') prod.receta = validarReceta(data.receta);
