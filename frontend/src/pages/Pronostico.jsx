@@ -7,7 +7,7 @@ import { pronosticoService, comprasService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { StatCard, Variacion, Button, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { LineChart, Barra } from '../components/charts/Charts.jsx';
-import { InsumoArt } from '../components/decor/FoodArt.jsx';
+import { FotoInsumo } from '../components/decor/FoodArt.jsx';
 import { money, qty, fecha } from '../utils/format.js';
 
 const DIA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -97,7 +97,7 @@ export default function Pronostico() {
           <ul className="space-y-3">
             {consumoPorInsumo.map((c, i) => (
               <li key={c.id} className="grid grid-cols-[3rem_6.5rem_1fr_4.5rem] items-center gap-3">
-                <InsumoArt arte={c.arte} className="h-9 w-12" />
+                <FotoInsumo insumo={c} className="h-9 w-12 rounded-lg" />
                 <span className="truncate text-texto">{c.nombre}</span>
                 <Barra porcentaje={((c.consumo7 * c.costoUnitario) / maxConsumo) * 100} color={i % 2 ? 'var(--c-secundario)' : 'var(--c-tinta)'} />
                 <span className="text-right font-display font-semibold text-texto">{qty(c.consumo7, c.unidad)}</span>

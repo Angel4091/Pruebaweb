@@ -5,7 +5,7 @@ import { useFetch } from '../hooks/useFetch.js';
 import { inventarioService, productosService, comprasService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Aviso, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
-import { FoodArt, InsumoArt } from '../components/decor/FoodArt.jsx';
+import { FotoProducto, FotoInsumo } from '../components/decor/FoodArt.jsx';
 import { money, qty, fecha, hora } from '../utils/format.js';
 
 const ESTADOS = {
@@ -125,7 +125,7 @@ export default function Inventario() {
                     <tr key={i.id}>
                       <td>
                         <div className="flex items-center gap-3">
-                          {i.esReventa ? <FoodArt arte={i.arte} className="h-9 w-12 shrink-0" /> : <InsumoArt arte={i.arte} className="h-9 w-12 shrink-0" />}
+                          {i.esReventa ? <FotoProducto producto={i} className="h-10 w-14 shrink-0 rounded-lg" /> : <FotoInsumo insumo={i} className="h-10 w-14 shrink-0 rounded-lg" />}
                           <span className="text-texto">{i.nombre}</span>
                         </div>
                       </td>
@@ -181,8 +181,8 @@ export default function Inventario() {
           ) : (
             <div className="p-4">
               <div className="flex flex-col gap-4 sm:flex-row">
-                <div className="grid h-40 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--c-secundario)_14%,var(--c-superficie-2))] sm:w-52">
-                  <FoodArt arte={receta.arte} className="h-36" />
+                <div className="h-40 shrink-0 overflow-hidden rounded-xl bg-superficie-2 sm:w-56">
+                  <FotoProducto producto={receta} className="h-full w-full" />
                 </div>
                 <div className="flex-1 border-b border-secundario/60 pb-3">
                   <h3 className="font-display text-2xl font-bold text-texto">{receta.nombre}</h3>
@@ -449,7 +449,7 @@ function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer 
   const { notify } = useApp();
   const { data: categorias } = useFetch(() => productosService.categorias(), []);
   const [creando, setCreando] = useState(false);
-  const [form, setForm] = useState({ nombre: '', precio: '', categoriaId: 'cat-antojitos', descripcion: '', receta: [{ insumoId: '', cantidad: '' }] });
+  const [form, setForm] = useState({ nombre: '', precio: '', categoriaId: 'cat-antojitos', descripcion: '', imagen: null, receta: [{ insumoId: '', cantidad: '' }] });
   const [guardando, setGuardando] = useState(false);
 
   const elaborados = productos.filter((p) => p.tipo === 'elaborado');
@@ -496,7 +496,7 @@ function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer 
                   <tr key={p.id}>
                     <td>
                       <div className="flex items-center gap-2">
-                        <FoodArt arte={p.arte} className="size-9" /> {p.nombre}
+                        <FotoProducto producto={p} className="size-9 rounded-md" /> {p.nombre}
                       </div>
                     </td>
                     <td className="text-right">{money(p.precio)}</td>
@@ -533,6 +533,27 @@ function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer 
           </Field>
           <Field label="Descripción" className="sm:col-span-2">
             <input className="campo" value={form.descripcion} onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))} />
+          </Field>
+          <Field label="Foto del platillo (opcional)" ayuda="PNG o JPG, máximo 1 MB. Si no subes una, se usa una ilustración." className="sm:col-span-3">
+            <div className="flex items-center gap-3">
+              {form.imagen && <img src={form.imagen} alt="" className="size-14 rounded-lg object-cover" />}
+              <input
+                type="file"
+                accept="image/png,image/jpeg"
+                className="text-sm"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 1024 * 1024) {
+                    notify('La foto supera el máximo de 1 MB', 'error');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = () => setForm((f) => ({ ...f, imagen: reader.result }));
+                  reader.readAsDataURL(file);
+                }}
+              />
+            </div>
           </Field>
           <div className="sm:col-span-3">
             <p className="mb-2 font-display text-sm font-medium">Receta (cantidad por platillo en la unidad del insumo)</p>

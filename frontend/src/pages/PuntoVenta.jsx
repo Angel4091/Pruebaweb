@@ -8,7 +8,8 @@ import { useFetch } from '../hooks/useFetch.js';
 import { productosService, clientesService, ventasService, cajaService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { Button, Modal, Field, Cargando, ErrorBox, Vacio, Aviso } from '../components/ui/index.jsx';
-import { FoodArt } from '../components/decor/FoodArt.jsx';
+import { FotoProducto } from '../components/decor/FoodArt.jsx';
+import { Logo } from '../components/decor/Decor.jsx';
 import { money, fecha, hora, ETIQUETA_METODO, ETIQUETA_ORDEN, ETIQUETA_COMPROBANTE } from '../utils/format.js';
 
 const IVA = 0.13;
@@ -178,8 +179,8 @@ export default function PuntoVenta() {
                   onClick={() => agregar(p)}
                   className="group relative flex flex-col items-center overflow-hidden rounded-xl border border-borde bg-superficie pb-2.5 text-center transition hover:-translate-y-0.5 hover:border-secundario hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  <div className="w-full bg-[color-mix(in_srgb,var(--c-secundario)_10%,var(--c-superficie-2))] px-4 pt-2">
-                    <FoodArt arte={p.arte} className="mx-auto aspect-square w-full max-w-[120px] transition group-hover:scale-105" />
+                  <div className="aspect-[4/3] w-full overflow-hidden bg-superficie-2">
+                    <FotoProducto producto={p} className="h-full w-full transition duration-300 group-hover:scale-105" />
                   </div>
                   <span className="mt-2 px-1 text-sm leading-tight text-texto">{p.nombre}</span>
                   <span className="font-display text-lg font-bold text-texto">{money(p.precio)}</span>
@@ -232,7 +233,7 @@ export default function PuntoVenta() {
                   <tr key={i.id}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <FoodArt arte={i.arte} className="size-11 shrink-0" />
+                        <FotoProducto producto={i} className="size-11 shrink-0 rounded-lg" />
                         <span className="text-texto">{i.nombre}</span>
                       </div>
                     </td>
@@ -552,7 +553,8 @@ function TicketModal({ venta, onClose }) {
     >
       <div className="zona-impresion rounded-xl border border-dashed border-borde bg-white p-5 font-body text-sm text-[#14213d]">
         <div className="text-center">
-          <p className="font-display text-lg font-bold">{config?.nombre}</p>
+          <Logo variante="completo" className="mx-auto mb-1 w-40 text-[#14213d]" />
+          {config?.logo && <p className="font-display text-lg font-bold">{config.nombre}</p>}
           <p>{venta.sucursal?.nombre} · {venta.sucursal?.direccion}</p>
           <p className="mt-2 font-display font-semibold">{ETIQUETA_COMPROBANTE[venta.tipoComprobante]}</p>
           <p className="font-display text-base font-bold">{venta.numero}</p>

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 /**
  * Ilustraciones vectoriales de platillos e insumos.
  * Cada platillo se dibuja sobre un plato visto desde arriba, con paleta cálida,
@@ -262,4 +264,24 @@ export function InsumoArt({ arte = 'grano', className = '' }) {
       {formas[forma](color)}
     </svg>
   );
+}
+
+/* ---------- Fotografías ---------- */
+
+/**
+ * Foto real de un platillo (public/img/platillos/<id>.jpg) o la imagen que se subió al crearlo.
+ * Si la foto no existe o falla, se muestra la ilustración vectorial como respaldo.
+ */
+export function FotoProducto({ producto, className = '', alt }) {
+  const [fallo, setFallo] = useState(false);
+  const src = producto?.imagen || `/img/platillos/${producto?.id}.jpg`;
+  if (!producto || fallo) return <FoodArt arte={producto?.arte} className={className} />;
+  return <img src={src} alt={alt ?? producto.nombre} loading="lazy" onError={() => setFallo(true)} className={`object-cover ${className}`} />;
+}
+
+/** Foto real de un insumo (public/img/insumos/<id>.jpg) con respaldo ilustrado. */
+export function FotoInsumo({ insumo, className = '' }) {
+  const [fallo, setFallo] = useState(false);
+  if (!insumo || fallo) return <InsumoArt arte={insumo?.arte} className={className} />;
+  return <img src={`/img/insumos/${insumo.id}.jpg`} alt="" loading="lazy" onError={() => setFallo(true)} className={`object-cover ${className}`} />;
 }
