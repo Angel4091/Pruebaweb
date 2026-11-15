@@ -1,0 +1,199 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens de la identidad visual de Orígenes SV.
+ * Los colores de marca se sobreescriben en tiempo de ejecución desde
+ * el módulo "Identidad Visual" (ver context/AppContext.jsx).
+ */
+:root {
+  --c-primario: #0b2d6b;
+  --c-secundario: #f4b942;
+  --c-fondo: #f9f5e7;
+  --c-acento: #3a6ea5;
+  --c-exito: #28a745;
+  --c-error: #e74c3c;
+
+  --c-superficie: #fffdf8;
+  --c-superficie-2: #f6efdc;
+  --c-texto: #14213d;
+  --c-texto-suave: #5b6478;
+  --c-borde: #eadfc6;
+  --c-naranja: #e8833a;
+  --c-sidebar: var(--c-primario);
+  --c-tinta-decor: #e7c98f;
+
+  --f-principal: 'Poppins', system-ui, sans-serif;
+  --f-secundaria: 'Roboto', system-ui, sans-serif;
+
+  --sombra: 0 1px 2px rgb(20 33 61 / 0.05), 0 6px 18px -8px rgb(20 33 61 / 0.18);
+  --radio-borde: 1px;
+}
+
+[data-theme='dark'] {
+  --c-fondo: #0d1424;
+  --c-superficie: #151f35;
+  --c-superficie-2: #1c2943;
+  --c-texto: #edf0f7;
+  --c-texto-suave: #9aa5bd;
+  --c-borde: #26355a;
+  --c-sidebar: #08183a;
+  --c-tinta-decor: #3a4a6e;
+}
+
+[data-sombras='off'] {
+  --sombra: none;
+}
+[data-bordes='off'] {
+  --radio-borde: 0px;
+}
+
+@theme inline {
+  --color-primario: var(--c-primario);
+  --color-secundario: var(--c-secundario);
+  --color-fondo: var(--c-fondo);
+  --color-acento: var(--c-acento);
+  --color-exito: var(--c-exito);
+  --color-error: var(--c-error);
+  --color-superficie: var(--c-superficie);
+  --color-superficie-2: var(--c-superficie-2);
+  --color-texto: var(--c-texto);
+  --color-suave: var(--c-texto-suave);
+  --color-borde: var(--c-borde);
+  --color-naranja: var(--c-naranja);
+  --color-sidebar: var(--c-sidebar);
+  --font-display: var(--f-principal);
+  --font-body: var(--f-secundaria);
+  --shadow-card: var(--sombra);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-fondo);
+  color: var(--c-texto);
+  font-family: var(--f-principal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tarjeta base: superficie cálida, borde fino y sombra suave. */
+.card {
+  background: var(--c-superficie);
+  border: var(--radio-borde) solid var(--c-borde);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--f-secundaria);
+  font-size: 0.875rem;
+}
+.tabla th {
+  text-align: left;
+  font-family: var(--f-principal);
+  font-weight: 600;
+  color: var(--c-texto);
+  background: var(--c-superficie-2);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--c-borde);
+  white-space: nowrap;
+}
+.tabla td {
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--c-borde);
+  vertical-align: middle;
+}
+.tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+.tabla tbody tr:hover td {
+  background: color-mix(in srgb, var(--c-secundario) 7%, transparent);
+}
+
+.campo {
+  width: 100%;
+  border: 1px solid var(--c-borde);
+  background: var(--c-superficie);
+  color: var(--c-texto);
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font-family: var(--f-secundaria);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.campo:focus {
+  border-color: var(--c-acento);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-acento) 22%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-secundario);
+  outline-offset: 2px;
+}
+
+/* Ilustraciones decorativas del encabezado. */
+.decor-tinta {
+  color: var(--c-tinta-decor);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes vuelo {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+[data-animaciones='on'] .anim-entrada {
+  animation: aparecer 0.35s ease-out both;
+}
+[data-animaciones='on'] .anim-vuelo {
+  animation: vuelo 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Impresión de comprobantes: solo se imprime el área marcada. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .zona-impresion,
+  .zona-impresion * {
+    visibility: visible;
+  }
+  .zona-impresion {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    box-shadow: none !important;
+  }
+  .no-imprimir {
+    display: none !important;
+  }
+}
