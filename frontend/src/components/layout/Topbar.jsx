@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Store, Search, CalendarDays, Bell, Sun, Moon, BookOpen, Pencil, ChevronDown, Menu, Package, HandCoins } from 'lucide-react';
+import { Store, Search, CalendarDays, Bell, Sun, Moon, BookOpen, Pencil, ChevronDown, Menu, Package, HandCoins, LogOut } from 'lucide-react';
 import { useApp } from '../../context/AppContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { ETIQUETA_ROL } from '../../routes/modulos.js';
 import { generalService } from '../../services/index.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import { Logo, DivisorRombos } from '../decor/Decor.jsx';
@@ -22,8 +24,10 @@ const pill = 'flex h-11 items-center gap-2 whitespace-nowrap rounded-full border
 
 export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…' }) {
   const { sucursales, sucursal, setSucursalId, config, modoOscuro, toggleModo, version } = useApp();
+  const { usuario, rol, logout } = useAuth();
+  const esCliente = rol === 'cliente';
   const navigate = useNavigate();
-  const [menu, setMenu] = useState(null); // 'sucursal' | 'notif' | 'buscar' | null
+  const [menu, setMenu] = useState(null); // 'sucursal' | 'notif' | 'buscar' | 'usuario' | null
   const [q, setQ] = useState('');
   const [resultados, setResultados] = useState([]);
   const [notificaciones, setNotificaciones] = useState([]);
@@ -33,6 +37,7 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
   const refSuc = useClickFuera(() => menu === 'sucursal' && cerrar());
   const refNotif = useClickFuera(() => menu === 'notif' && cerrar());
   const refBuscar = useClickFuera(() => menu === 'buscar' && cerrar());
+  const refUsuario = useClickFuera(() => menu === 'usuario' && cerrar());
 
   useEffect(() => {
     const t = setInterval(() => setAhora(new Date()), 60_000);
@@ -40,9 +45,10 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
   }, []);
 
   useEffect(() => {
-    if (!sucursal) return;
+    // Los clientes no reciben alertas internas del restaurante.
+    if (!sucursal || esCliente) return;
     generalService.notificaciones(sucursal.id).then(setNotificaciones).catch(() => setNotificaciones([]));
-  }, [sucursal, version]);
+  }, [sucursal, version, esCliente]);
 
   useEffect(() => {
     if (qDebounced.trim().length < 2) {
@@ -71,11 +77,11 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
         <button type="button" onClick={onMenu} className="rounded-lg p-2 text-primario hover:bg-superficie-2 lg:hidden" aria-label="Abrir menú">
           <Menu className="size-6" />
         </button>
-        <Link to="/identidad" className="group flex min-w-0 items-center gap-3 pr-2" title="Editar identidad visual">
+        <Link to={rol === 'administrador' ? '/identidad' : '/'} className="group flex min-w-0 items-center gap-3 pr-2" title={rol === 'administrador' ? 'Editar identidad visual' : 'Ir al inicio'}>
           <Logo variante="figura" className="hidden w-12 text-[var(--c-tinta)] sm:block" />
           <span className="hidden h-9 w-px bg-borde sm:block" />
           <span className="truncate font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
-          <Pencil className="size-4 text-suave group-hover:text-primario" />
+          {rol === 'administrador' && <Pencil className="size-4 text-suave group-hover:text-primario" />}
         </Link>
 
         <div ref={refSuc} className="relative ml-auto hidden md:block xl:ml-4">
@@ -105,7 +111,7 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           )}
         </div>
 
-        <div ref={refBuscar} className="relative hidden flex-1 lg:block lg:max-w-[260px] 2xl:max-w-sm">
+        <div ref={refBuscar} className={`relative hidden flex-1 lg:max-w-[260px] 2xl:max-w-sm ${esCliente ? '' : 'lg:block'}`}>
           <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-texto" />
           <input
             value={q}
@@ -133,12 +139,12 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           )}
         </div>
 
-        <div className={`${pill} hidden xl:flex`} title="Fecha y turno actual">
+        <div className={`${pill} hidden ${esCliente ? '' : 'xl:flex'}`} title="Fecha y turno actual">
           <CalendarDays className="size-5 text-primario" />
           {fechaLarga(ahora)} · {turnoDe(ahora)}
         </div>
 
-        <div ref={refNotif} className="relative ml-auto md:ml-0">
+        <div ref={refNotif} className={`relative ml-auto md:ml-0 ${esCliente ? 'hidden' : ''}`}>
           <button
             type="button"
             className="relative grid size-11 place-items-center rounded-full text-texto hover:bg-superficie-2"
@@ -192,9 +198,29 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           <span className="hidden sm:inline">Guía</span>
         </button>
 
-        <div className="relative grid size-11 shrink-0 place-items-center rounded-full bg-primario font-display font-bold text-white" title="Andrea Morales · Gerente general">
-          {iniciales('Andrea Morales')}
-          <span className="absolute right-0 bottom-0 size-3 rounded-full bg-exito ring-2 ring-fondo" />
+        <div ref={refUsuario} className={`relative shrink-0 ${esCliente ? 'ml-auto md:ml-0' : ''}`}>
+          <button
+            type="button"
+            onClick={() => setMenu(menu === 'usuario' ? null : 'usuario')}
+            className="relative grid size-11 place-items-center rounded-full bg-primario font-display font-bold text-white hover:brightness-110"
+            aria-label={`Cuenta de ${usuario?.nombre}`}
+            aria-expanded={menu === 'usuario'}
+          >
+            {iniciales(usuario?.nombre)}
+            <span className="absolute right-0 bottom-0 size-3 rounded-full bg-exito ring-2 ring-fondo" />
+          </button>
+          {menu === 'usuario' && (
+            <div className="card absolute top-12 right-0 z-30 w-64 overflow-hidden">
+              <div className="border-b border-borde px-4 py-3">
+                <p className="font-display font-semibold text-texto">{usuario?.nombre}</p>
+                <p className="text-sm text-suave">{usuario?.correo}</p>
+                <span className="mt-2 inline-block rounded-full bg-secundario/25 px-2.5 py-0.5 text-xs font-semibold text-texto">{ETIQUETA_ROL[rol]}</span>
+              </div>
+              <button type="button" onClick={() => logout()} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-error hover:bg-superficie-2">
+                <LogOut className="size-4" /> Cerrar sesión
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <DivisorRombos className="px-4 sm:px-6 lg:px-8" />
