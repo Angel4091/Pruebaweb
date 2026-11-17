@@ -10,4 +10,10 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN || '*',
   dataFile: path.resolve(backendRoot, process.env.DATA_FILE || '../database/data.json'),
   seedFile: path.resolve(backendRoot, '../database/seeds/seed.mjs'),
+  // Secreto para firmar los tokens de sesión. En producción debe definirse JWT_SECRET.
+  jwtSecret: process.env.JWT_SECRET || 'origenes-sv-secreto-de-desarrollo',
 };
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('Define la variable de entorno JWT_SECRET antes de iniciar la API en producción');
+}
