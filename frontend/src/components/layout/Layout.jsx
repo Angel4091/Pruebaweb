@@ -24,10 +24,10 @@ export function Layout() {
       <Sidebar abierto={menu} onClose={() => setMenu(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onMenu={() => setMenu(true)} onGuia={() => setGuia(true)} placeholder={PLACEHOLDERS[pathname]} />
-        <main className="relative flex-1 px-4 pt-2 pb-8 sm:px-6 lg:px-8">
-          <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-40 w-[440px] xl:block lg:right-8" />
-          {/* El contenido va sobre la ilustración del encabezado. */}
-          <div className="relative z-[1]">
+        <main className="relative flex-1 px-4 pt-2 pb-10 sm:px-6 lg:px-10">
+          <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-40 w-[440px] xl:block lg:right-10" />
+          {/* El contenido va sobre la ilustración del encabezado y con un ancho máximo cómodo de leer. */}
+          <div className="relative z-[1] mx-auto w-full max-w-[1520px]">
             {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : config ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
           </div>
         </main>
@@ -67,12 +67,12 @@ export function Layout() {
 /** Encabezado de página: título grande y subtítulo, con acciones opcionales. */
 export function PageHeader({ titulo, subtitulo, children }) {
   return (
-    <div className="relative mb-5 flex flex-wrap items-end justify-between gap-4 pt-3">
+    <div className="relative mb-7 flex flex-wrap items-end justify-between gap-4 pt-3">
       <div>
-        <h1 className="font-display text-[2.1rem] leading-tight font-bold tracking-tight text-texto sm:text-[2.6rem]">{titulo}</h1>
-        {subtitulo && <p className="mt-1 text-lg text-texto/85 sm:text-xl">{subtitulo}</p>}
+        <h1 className="font-display text-[2.1rem] leading-tight font-bold tracking-tight text-texto sm:text-[2.5rem]">{titulo}</h1>
+        {subtitulo && <p className="mt-1 text-lg text-texto/80">{subtitulo}</p>}
       </div>
-      {children && <div className="relative z-10 flex flex-wrap gap-3">{children}</div>}
+      {children && <div className="relative z-10 flex flex-wrap items-center gap-3">{children}</div>}
     </div>
   );
 }
