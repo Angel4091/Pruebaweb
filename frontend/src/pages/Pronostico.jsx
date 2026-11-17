@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChartColumn, ShoppingBasket, PackageCheck, CalendarDays, Utensils, TriangleAlert, Lightbulb, ShoppingCart, CircleAlert } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { pronosticoService, comprasService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
@@ -16,7 +15,6 @@ const DIA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 export default function Pronostico() {
   const { sucursalId, notify, refrescar, version } = useApp();
   const navigate = useNavigate();
-  const esAdmin = useAuth().rol === 'administrador';
   const [dias, setDias] = useState(7);
   const [enviando, setEnviando] = useState(null);
   const { data, loading, error, reload } = useFetch(() => pronosticoService.obtener(sucursalId, dias), [sucursalId, dias, version]);
@@ -25,9 +23,9 @@ export default function Pronostico() {
     setEnviando(clave);
     try {
       const ordenes = await comprasService.crearOrdenes({ sucursalId, pedidos });
-      notify(`${ordenes.length === 1 ? 'Orden de compra creada' : `${ordenes.length} órdenes de compra creadas`}. ${esAdmin ? 'Recíbelas en Compras cuando llegue la factura.' : 'Administración la recibirá en Compras.'}`);
+      notify(`${ordenes.length === 1 ? 'Orden de compra creada' : `${ordenes.length} órdenes de compra creadas`}. Recíbelas en Compras cuando llegue la factura.`);
       refrescar();
-      if (esAdmin) navigate('/compras');
+      navigate('/compras');
     } catch (err) {
       notify(err.message, 'error');
     } finally {

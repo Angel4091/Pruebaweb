@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { cajaService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
-import { Panel, Badge, Button, Modal, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
+import { Panel, Badge, Button, Modal, Aviso, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { DonutChart } from '../components/charts/Charts.jsx';
 import { money, fecha, hora, ETIQUETA_METODO } from '../utils/format.js';
 
@@ -89,7 +89,7 @@ export default function Caja() {
       </PageHeader>
       <ErrorBox error={cajas.error} onRetry={cajas.reload} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[1fr_1.2fr]">
+      <div className="grid gap-5 xl:grid-cols-[1fr_1.2fr]">
         <Panel titulo="Apertura de caja" icon={Calculator}>
           {turno ? (
             <div className="flex flex-wrap items-center gap-5 p-5">
@@ -208,12 +208,6 @@ export default function Caja() {
                 {diferencia === 0 ? <CircleCheck className="size-7 fill-primario text-white" /> : <TriangleAlert className="size-6" />}
                 {diferencia === 0 ? 'Caja en orden' : diferencia < 0 ? `Faltante de ${money(-diferencia)}` : `Sobrante de ${money(diferencia)}`}
               </div>
-              <div className="px-4 pb-4">
-                <Button icon={Lock} className="w-full py-3 text-base" onClick={() => setConfirmarCierre(true)}>
-                  Cerrar turno
-                </Button>
-                <p className="mt-2 text-center text-xs text-suave">Cuenta el efectivo y cierra el turno al terminar el día.</p>
-              </div>
             </div>
           )}
         </Panel>
@@ -266,6 +260,16 @@ export default function Caja() {
         </Panel>
       </div>
 
+      <Aviso
+        className="mt-5"
+        accion={
+          <Button icon={Lock} className="px-8 py-3 text-base" disabled={!turno} onClick={() => setConfirmarCierre(true)}>
+            Cerrar turno
+          </Button>
+        }
+      >
+        <span className="font-display text-lg font-semibold text-texto">Recuerda cerrar el turno al finalizar el día</span>
+      </Aviso>
 
       <Modal
         abierto={confirmarCierre}

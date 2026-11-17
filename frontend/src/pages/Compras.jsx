@@ -17,7 +17,6 @@ export default function Compras() {
   const [guardando, setGuardando] = useState(false);
   const [pago, setPago] = useState(null);
   const [nuevoProveedor, setNuevoProveedor] = useState(false);
-  const [pestana, setPestana] = useState('registrar');
 
   const resumen = useFetch(() => comprasService.resumen(), [version]);
   const proveedores = useFetch(() => comprasService.proveedores(), [version]);
@@ -49,7 +48,6 @@ export default function Compras() {
       ordenCompraId: o.id,
       items: o.items.map((i) => ({ insumoId: i.insumoId, cantidad: i.cantidad, costoUnitario: r2(i.costoEstimado / i.cantidad) })),
     });
-    setPestana('registrar');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     notify('Orden cargada. Completa el número de factura y registra la compra.');
   };
@@ -82,36 +80,15 @@ export default function Compras() {
     <>
       <PageHeader titulo="Compras y proveedores" subtitulo="Registra facturas de insumos, gastos y cuentas por pagar" />
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard acento={false} icon={Truck} tono="azul" titulo="Compras del mes" valor={r ? money(r.comprasMes) : '—'} detalle="Costo de insumos" />
         <StatCard acento={false} icon={Receipt} tono="dorado" titulo="Gastos del mes" valor={r ? money(r.gastosMes) : '—'} detalle="Servicios y otros" />
         <StatCard acento={false} icon={HandCoins} tono="naranja" titulo="Cuentas por pagar" valor={r ? money(r.porPagar) : '—'} detalle={r?.vencidas ? <span className="text-error">{r.vencidas} vencidas</span> : 'Al día'} />
         <StatCard acento={false} icon={Building2} tono="verde" titulo="Proveedores" valor={r?.proveedores ?? '—'} />
       </div>
 
-      {/* Pestañas: un solo bloque a la vez para que la pantalla no se sature */}
-      <div className="mt-6 mb-5 flex flex-wrap gap-2 border-b border-borde" role="tablist" aria-label="Secciones de compras">
-        {[
-          ['registrar', 'Registrar compra'],
-          ['cuentas', `Cuentas por pagar${cuentas.data ? ` (${cuentas.data.filter((c) => c.saldo > 0).length})` : ''}`],
-          ['ordenes', `Órdenes de compra${ordenes.data?.length ? ` (${ordenes.data.length})` : ''}`],
-          ['historial', 'Historial'],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={pestana === id}
-            onClick={() => setPestana(id)}
-            className={`-mb-px border-b-[3px] px-4 py-2.5 font-display text-sm font-semibold transition ${pestana === id ? 'border-secundario text-texto' : 'border-transparent text-suave hover:text-texto'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="max-w-5xl">
-        {pestana === 'registrar' && <Panel titulo={form.ordenCompraId ? 'Recibir orden de compra' : 'Registrar factura de compra'} icon={Receipt}>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.2fr_1fr]">
+        <Panel titulo={form.ordenCompraId ? 'Recibir orden de compra' : 'Registrar factura de compra'} icon={Receipt}>
           <form onSubmit={registrar} className="grid gap-3 p-5 sm:grid-cols-2">
             <div className="flex rounded-xl bg-superficie-2 p-1 sm:col-span-2" role="radiogroup" aria-label="Tipo de compra">
               {[
@@ -207,13 +184,13 @@ export default function Compras() {
               </Button>
             </div>
           </form>
-        </Panel>}
+        </Panel>
 
-        {pestana === 'cuentas' && (
+        <div className="flex flex-col gap-5">
           <Panel titulo="Cuentas por pagar" icon={HandCoins}>
             {cuentas.loading && !cuentas.data && <Cargando />}
             <ErrorBox error={cuentas.error} onRetry={cuentas.reload} />
-            <div className="max-h-[560px] overflow-auto">
+            <div className="max-h-80 overflow-auto">
               <table className="tabla min-w-[480px]">
                 <thead>
                   <tr>
@@ -252,9 +229,7 @@ export default function Compras() {
               </table>
             </div>
           </Panel>
-        )}
 
-        {pestana === 'ordenes' && (
           <Panel titulo="Órdenes de compra pendientes" icon={ClipboardList}>
             {ordenes.data?.length === 0 ? (
               <Vacio icon={PackageCheck} titulo="No hay órdenes pendientes">Genera pedidos desde el módulo Pronóstico.</Vacio>
@@ -275,11 +250,11 @@ export default function Compras() {
               </ul>
             )}
           </Panel>
-        )}
+        </div>
       </div>
 
-      {pestana === 'historial' && <Panel titulo="Historial de compras y gastos" icon={History}>
-        <div className="max-h-[560px] overflow-auto">
+      <Panel titulo="Historial de compras y gastos" icon={History} className="mt-5">
+        <div className="max-h-96 overflow-auto">
           <table className="tabla min-w-[760px]">
             <thead>
               <tr>
@@ -312,7 +287,7 @@ export default function Compras() {
           </table>
           {compras.data?.length === 0 && <Vacio titulo="Aún no hay compras en esta sucursal" />}
         </div>
-      </Panel>}
+      </Panel>
 
       <PagoModal cuenta={pago} onClose={() => setPago(null)} onPagado={() => { setPago(null); refrescar(); }} />
       <ProveedorModal abierto={nuevoProveedor} onClose={() => setNuevoProveedor(false)} onGuardado={(p) => { setNuevoProveedor(false); setForm((f) => ({ ...f, proveedorId: p.id })); refrescar(); }} />

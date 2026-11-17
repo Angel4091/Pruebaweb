@@ -1,22 +1,9 @@
 /**
  * Cliente HTTP de la API REST.
- * Usa fetch con async/await, envía el token de sesión, convierte los errores HTTP
- * en ApiError y avisa cuando la sesión venció (401) para volver al inicio de sesión.
+ * Usa fetch con async/await, convierte los errores HTTP en ApiError
+ * y expone helpers por verbo (get, post, put, patch, del).
  */
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-let token = null;
-let alVencerSesion = null;
-
-/** Guarda el token que se enviará en cada petición (lo llama el contexto de sesión). */
-export const setToken = (nuevo) => {
-  token = nuevo;
-};
-
-/** Registra qué hacer cuando la API responde 401 (sesión inválida o vencida). */
-export const onSesionVencida = (fn) => {
-  alVencerSesion = fn;
-};
 
 export class ApiError extends Error {
   constructor(message, status, details) {
@@ -38,13 +25,13 @@ function buildUrl(path, params) {
 }
 
 async function request(method, path, { body, params } = {}) {
-  const headers = {};
-  if (body) headers['Content-Type'] = 'application/json';
-  if (token) headers.Authorization = `Bearer ${token}`;
-
   let response;
   try {
-    response = await fetch(buildUrl(path, params), { method, headers, body: body ? JSON.stringify(body) : undefined });
+    response = await fetch(buildUrl(path, params), {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
   } catch {
     throw new ApiError('No se pudo conectar con el servidor. Verifica que la API esté encendida.', 0);
   }
@@ -53,7 +40,6 @@ async function request(method, path, { body, params } = {}) {
   const data = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    if (response.status === 401 && token && !path.startsWith('/auth/')) alVencerSesion?.();
     throw new ApiError(data?.error || `Error ${response.status}`, response.status, data?.details);
   }
   return data;

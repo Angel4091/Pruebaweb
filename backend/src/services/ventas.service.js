@@ -1,18 +1,20 @@
 import { db } from '../config/db.js';
 import { AppError, notFound } from '../utils/AppError.js';
-import { round2 } from '../utils/money.js';
-import { calcularTotales } from '../utils/totales.js';
+import { round2, IVA_RATE } from '../utils/money.js';
 import { newId } from '../utils/ids.js';
 import { toDateKey } from '../utils/dates.js';
 import { calcularRequerimientos, validarExistencias, aplicarConsumo } from './inventario.service.js';
 import { obtenerCaja, turnoAbierto, METODOS_PAGO } from './caja.service.js';
-import { registrarComanda } from './pedidos.service.js';
-
-export { calcularTotales };
 
 export const TIPOS_COMPROBANTE = ['FCF', 'CCF'];
 export const TIPOS_ORDEN = ['comer_aqui', 'para_llevar', 'delivery'];
 
+/** Calcula subtotal, IVA (13 %) y total de una lista de items. */
+export function calcularTotales(items) {
+  const subtotal = round2(items.reduce((a, it) => a + it.cantidad * it.precioUnitario, 0));
+  const iva = round2(subtotal * IVA_RATE);
+  return { subtotal, iva, total: round2(subtotal + iva) };
+}
 
 /** Siguiente correlativo por sucursal y tipo, p. ej. "CCF-01-000045". */
 function siguienteCorrelativo(sucursal, tipo) {
@@ -45,7 +47,7 @@ function normalizarItems(items) {
  * 4. Asigna el correlativo del comprobante.
  */
 export function crearVenta(data) {
-  const { cajaId, tipoComprobante = 'FCF', tipoOrden = 'comer_aqui', clienteId = 'cli-cf', metodoPago = 'efectivo', montoRecibido, referenciaPago = '', pedidoId = null } = data;
+  const { cajaId, tipoComprobante = 'FCF', tipoOrden = 'comer_aqui', clienteId = 'cli-cf', metodoPago = 'efectivo', montoRecibido, referenciaPago = '' } = data;
   const caja = obtenerCaja(cajaId);
   const sucursal = db.collection('sucursales').find((s) => s.id === caja.sucursalId);
   const turno = turnoAbierto(cajaId);
@@ -53,15 +55,6 @@ export function crearVenta(data) {
   if (!TIPOS_COMPROBANTE.includes(tipoComprobante)) throw new AppError('Tipo de comprobante inválido (FCF o CCF)', 422);
   if (!TIPOS_ORDEN.includes(tipoOrden)) throw new AppError('Tipo de orden inválido', 422);
   if (!METODOS_PAGO.includes(metodoPago)) throw new AppError('Método de pago inválido', 422);
-
-  // Cobro de un pedido en línea: debe existir, ser de esta sucursal y no estar cobrado ni cancelado.
-  if (pedidoId) {
-    const pedido = db.collection('pedidos').find((p) => p.id === pedidoId);
-    if (!pedido || pedido.origen !== 'en_linea') throw new AppError('El pedido en línea no existe', 404);
-    if (pedido.sucursalId !== caja.sucursalId) throw new AppError('El pedido es de otra sucursal', 409);
-    if (pedido.ventaId) throw new AppError(`El pedido ${pedido.numero} ya fue cobrado`, 409);
-    if (pedido.estado === 'cancelado') throw new AppError(`El pedido ${pedido.numero} fue cancelado`, 409);
-  }
 
   const cliente = db.collection('clientes').find((c) => c.id === clienteId);
   if (!cliente) throw notFound('Cliente');
@@ -103,9 +96,6 @@ export function crearVenta(data) {
   };
   aplicarConsumo(requerimientos, sucursal.id, venta.numero, -1);
   db.collection('ventas').push(venta);
-  // Cada venta genera su comanda para cocina (o se enlaza al pedido en línea que se cobró).
-  const pedido = registrarComanda(venta, pedidoId);
-  venta.pedidoId = pedido?.id ?? null;
   db.save();
   return detalleVenta(venta);
 }
@@ -146,14 +136,6 @@ export function anularVenta(id, motivo = '') {
   aplicarConsumo(calcularRequerimientos(venta.items), venta.sucursalId, `Anulación ${venta.numero}`, 1);
   venta.estado = 'anulada';
   venta.motivoAnulacion = motivo;
-  // La comanda del POS se cancela; un pedido en línea vuelve a quedar pendiente de cobro.
-  const pedido = db.collection('pedidos').find((p) => p.ventaId === venta.id);
-  if (pedido?.origen === 'pos') {
-    pedido.estado = 'cancelado';
-    pedido.historial.push({ estado: 'cancelado', fecha: new Date().toISOString(), usuario: 'Anulación de venta' });
-  } else if (pedido) {
-    pedido.ventaId = null;
-  }
   db.save();
   return detalleVenta(venta);
 }

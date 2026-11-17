@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { rrhhService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
-import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
+import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Aviso, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { money, fecha } from '../utils/format.js';
 
 const POR_PAGINA = 5;
@@ -94,7 +94,7 @@ export default function Personal() {
         <StatCard acento={false} icon={Wallet} tono="azul" titulo="Pendientes" valor={pendientes} detalle={pendientes ? 'planillas por pagar' : 'Sin pagos pendientes'} />
       </div>
 
-      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.35fr_1fr]">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.35fr_1fr]">
         <div className="flex flex-col gap-5">
           <Panel
             titulo="Personal"
@@ -268,6 +268,7 @@ export default function Personal() {
               </div>
             )}
           </Panel>
+          <Aviso>Recuerda mantener actualizada la información para evitar inconsistencias en la planilla.</Aviso>
         </div>
       </div>
 

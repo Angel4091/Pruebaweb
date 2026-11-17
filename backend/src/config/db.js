@@ -16,23 +16,7 @@ function load() {
     console.log(`🌱 Base de datos creada desde los seeds en ${config.dataFile}`);
   }
   const raw = fs.readFileSync(config.dataFile, 'utf-8');
-  return migrar(JSON.parse(raw));
-}
-
-/**
- * Migración ligera: agrega a una base existente las colecciones nuevas
- * (usuarios y pedidos) sin borrar sus ventas ni su inventario.
- */
-function migrar(data) {
-  if (Array.isArray(data.usuarios) && data.usuarios.length > 0) return data;
-  const seed = buildSeed();
-  data.usuarios = seed.usuarios;
-  data.pedidos ??= [];
-  data.correlativoPedidos ??= data.pedidos.length;
-  data.meta = { ...data.meta, version: 2 };
-  fs.writeFileSync(config.dataFile, JSON.stringify(data, null, 2));
-  console.log('🔐 Base de datos actualizada con los usuarios de demostración');
-  return data;
+  return JSON.parse(raw);
 }
 
 export const db = {
