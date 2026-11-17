@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Utensils, ShoppingBag, Bike, Search, ShoppingCart, Trash2, Minus, Plus, X, User, FileText, Banknote, CreditCard, Bitcoin, Receipt, Printer, Lock,
+  Utensils, ShoppingBag, Bike, Search, ShoppingCart, Trash2, Minus, Plus, X, User, Banknote, CreditCard, Bitcoin, Receipt, Printer, Lock, Globe,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
-import { productosService, clientesService, ventasService, cajaService } from '../services/index.js';
+import { productosService, clientesService, ventasService, cajaService, pedidosService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { Button, Modal, Field, Cargando, ErrorBox, Vacio, Aviso } from '../components/ui/index.jsx';
 import { FotoProducto } from '../components/decor/FoodArt.jsx';
@@ -23,7 +23,7 @@ const ORDENES = [
 const METODOS = [
   { id: 'efectivo', label: 'Efectivo', icon: Banknote },
   { id: 'tarjeta', label: 'Tarjeta', icon: CreditCard },
-  { id: 'bitcoin', label: 'Bitcoin', sub: '(Chivo)', icon: Bitcoin },
+  { id: 'bitcoin', label: 'Chivo', icon: Bitcoin },
 ];
 
 export default function PuntoVenta() {
@@ -36,12 +36,14 @@ export default function PuntoVenta() {
   const [comprobante, setComprobante] = useState('FCF');
   const [cliente, setCliente] = useState(null);
   const [cajaId, setCajaId] = useState('');
+  const [pedidoActivo, setPedidoActivo] = useState(null);
   const [cobrando, setCobrando] = useState(false);
   const [ticket, setTicket] = useState(null);
 
   const productos = useFetch(() => productosService.listar({ sucursalId }), [sucursalId]);
   const categorias = useFetch(() => productosService.categorias(), []);
   const cajas = useFetch(() => cajaService.listar(sucursalId), [sucursalId]);
+  const enLinea = useFetch(() => pedidosService.listar(sucursalId, { porCobrar: true }), [sucursalId]);
 
   // Selecciona automáticamente la primera caja abierta de la sucursal.
   useEffect(() => {
@@ -50,7 +52,17 @@ export default function PuntoVenta() {
     if (!actual) setCajaId((cajas.data.find((c) => c.estado === 'abierta') ?? cajas.data[0])?.id ?? '');
   }, [cajas.data, cajaId]);
 
-  useEffect(() => setCarrito([]), [sucursalId]);
+  // Revisa cada 15 segundos si llegaron pedidos en línea para cobrar.
+  useEffect(() => {
+    const t = setInterval(() => enLinea.reload({ silencioso: true }), 15_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enLinea.reload]);
+
+  useEffect(() => {
+    setCarrito([]);
+    setPedidoActivo(null);
+  }, [sucursalId]);
 
   const visibles = useMemo(() => {
     const q = busqueda.toLowerCase().trim();
@@ -76,6 +88,26 @@ export default function PuntoVenta() {
   const cambiar = (id, delta) =>
     setCarrito((c) => c.map((i) => (i.id === id ? { ...i, cantidad: Math.min(i.disponibles, i.cantidad + delta) } : i)).filter((i) => i.cantidad > 0));
   const quitar = (id) => setCarrito((c) => c.filter((i) => i.id !== id));
+  const limpiar = () => {
+    setCarrito([]);
+    setPedidoActivo(null);
+    setCliente(null);
+  };
+
+  /** Carga un pedido en línea en el carrito para cobrarlo. */
+  const cargarPedido = (pedido) => {
+    const catalogo = productos.data ?? [];
+    setCarrito(
+      pedido.items.map((it) => {
+        const p = catalogo.find((x) => x.id === it.productoId);
+        return { id: it.productoId, nombre: it.nombre, precio: it.precioUnitario, arte: p?.arte, disponibles: Math.max(p?.disponibles ?? it.cantidad, it.cantidad), cantidad: it.cantidad };
+      }),
+    );
+    setTipoOrden(pedido.tipoOrden);
+    setMetodo(pedido.metodoPago);
+    setCliente({ id: pedido.clienteId, nombre: pedido.clienteNombre, tipo: 'consumidor_final' });
+    setPedidoActivo(pedido);
+  };
 
   const puedeCobrar = carrito.length > 0 && caja?.estado === 'abierta';
 
@@ -97,15 +129,16 @@ export default function PuntoVenta() {
         metodoPago: metodo,
         montoRecibido: pago.montoRecibido,
         referenciaPago: pago.referencia,
+        pedidoId: pedidoActivo?.id,
         items: carrito.map((i) => ({ productoId: i.id, cantidad: i.cantidad })),
       });
       setCobrando(false);
       setTicket(venta);
-      setCarrito([]);
-      setCliente(null);
-      notify(`Venta registrada: ${venta.numero}`);
+      limpiar();
+      notify(`Venta registrada: ${venta.numero}. La comanda ya está en cocina.`);
       productos.reload({ silencioso: true });
       cajas.reload({ silencioso: true });
+      enLinea.reload({ silencioso: true });
       refrescar();
     } catch (err) {
       notify(err.message, 'error');
@@ -113,10 +146,12 @@ export default function PuntoVenta() {
     }
   };
 
+  const porCobrar = (enLinea.data ?? []).filter((p) => p.id !== pedidoActivo?.id);
+
   return (
     <>
       <PageHeader titulo="Punto de venta" subtitulo="Seleccione productos y complete su orden">
-        <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Tipo de orden">
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo de orden">
           {ORDENES.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -124,11 +159,11 @@ export default function PuntoVenta() {
               role="radio"
               aria-checked={tipoOrden === id}
               onClick={() => setTipoOrden(id)}
-              className={`flex h-12 min-w-40 items-center justify-center gap-3 rounded-xl px-5 font-display font-medium transition ${
+              className={`flex h-11 min-w-36 items-center justify-center gap-2 rounded-xl px-4 font-display font-medium transition ${
                 tipoOrden === id ? 'bg-primario text-white shadow-[inset_0_-4px_0_var(--c-secundario)]' : 'card text-texto hover:bg-superficie-2'
               }`}
             >
-              <Icon className="size-6" /> {label}
+              <Icon className="size-5" /> {label}
             </button>
           ))}
         </div>
@@ -136,7 +171,7 @@ export default function PuntoVenta() {
 
       {caja && caja.estado !== 'abierta' && (
         <Aviso
-          className="mb-4"
+          className="mb-6"
           titulo={`${caja.nombre} está cerrada`}
           accion={
             <Link to="/caja" className="rounded-xl bg-primario px-4 py-2 font-display text-sm font-semibold text-white">
@@ -148,15 +183,37 @@ export default function PuntoVenta() {
         </Aviso>
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[1.45fr_1fr]">
+      {porCobrar.length > 0 && (
+        <section className="card anim-entrada mb-6 flex flex-wrap items-center gap-3 border-l-4! border-l-acento! px-5 py-3" aria-label="Pedidos en línea por cobrar">
+          <h2 className="flex items-center gap-2 font-display font-semibold text-texto">
+            <Globe className="size-5 text-acento" /> Pedidos en línea por cobrar
+          </h2>
+          <div className="flex flex-1 flex-wrap gap-2">
+            {porCobrar.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => cargarPedido(p)}
+                className="flex items-center gap-2 rounded-full border border-borde bg-superficie px-3 py-1.5 text-sm hover:border-acento hover:bg-acento/5"
+                title={p.items.map((i) => `${i.cantidad} × ${i.nombre}`).join(', ')}
+              >
+                <b className="font-display">{p.numero}</b> {p.clienteNombre?.split(' ')[0]} · {money(p.total)}
+                <span className="font-semibold text-acento">Cobrar</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         {/* Catálogo */}
-        <section className="card anim-entrada p-3 sm:p-4">
-          <div className="mb-3 flex flex-wrap gap-3">
+        <section className="card anim-entrada p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap gap-3">
             <div className="relative min-w-52 flex-1">
               <Search className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-texto" />
-              <input className="campo h-12 pl-11" placeholder="Buscar platillos…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar platillos" />
+              <input className="campo h-11 pl-11" placeholder="Buscar platillos…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar platillos" />
             </div>
-            <select className="campo h-12 w-auto min-w-52 font-display" value={categoria} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoría">
+            <select className="campo h-11 w-auto min-w-52 font-display" value={categoria} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoría">
               <option value="">Todas las categorías</option>
               {categorias.data?.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -168,7 +225,7 @@ export default function PuntoVenta() {
           {productos.loading && !productos.data && <Cargando />}
           <ErrorBox error={productos.error} onRetry={productos.reload} />
           {productos.data && visibles.length === 0 && <Vacio titulo="No hay platillos con ese filtro">Prueba otra búsqueda o categoría.</Vacio>}
-          <div className="-mr-2 grid grid-cols-2 gap-3 pr-2 sm:grid-cols-3 lg:grid-cols-4 xl:max-h-[460px] xl:overflow-y-auto 2xl:grid-cols-5">
+          <div className="-mr-2 grid grid-cols-2 gap-4 pr-2 sm:grid-cols-3 xl:max-h-[calc(100vh-290px)] xl:min-h-[420px] xl:overflow-y-auto 2xl:grid-cols-4">
             {visibles.map((p) => {
               const agotado = p.disponibles <= 0;
               return (
@@ -177,13 +234,15 @@ export default function PuntoVenta() {
                   type="button"
                   disabled={agotado}
                   onClick={() => agregar(p)}
-                  className="group relative flex flex-col items-center overflow-hidden rounded-xl border border-borde bg-superficie pb-2.5 text-center transition hover:-translate-y-0.5 hover:border-secundario hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55"
+                  className="group relative flex flex-col overflow-hidden rounded-xl border border-borde bg-superficie text-left transition hover:-translate-y-0.5 hover:border-secundario hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   <div className="aspect-[4/3] w-full overflow-hidden bg-superficie-2">
                     <FotoProducto producto={p} className="h-full w-full transition duration-300 group-hover:scale-105" />
                   </div>
-                  <span className="mt-2 px-1 text-sm leading-tight text-texto">{p.nombre}</span>
-                  <span className="font-display text-lg font-bold text-texto">{money(p.precio)}</span>
+                  <span className="flex items-end justify-between gap-2 px-3 py-2.5">
+                    <span className="text-sm leading-tight text-texto">{p.nombre}</span>
+                    <span className="shrink-0 font-display font-bold text-texto">{money(p.precio)}</span>
+                  </span>
                   {agotado ? (
                     <span className="absolute top-2 right-2 rounded-full bg-error px-2 py-0.5 text-[0.7rem] font-semibold text-white">Agotado</span>
                   ) : p.disponibles <= 10 ? (
@@ -196,13 +255,13 @@ export default function PuntoVenta() {
           </div>
         </section>
 
-        {/* Carrito */}
-        <section className="card anim-entrada flex flex-col overflow-hidden">
+        {/* Carrito y cobro en una sola columna */}
+        <aside className="card anim-entrada flex flex-col overflow-hidden xl:sticky xl:top-28">
           <header className="flex items-center justify-between bg-primario px-5 py-3.5 text-white">
             <h2 className="flex items-center gap-3 font-display text-lg font-semibold">
               <ShoppingCart className="size-6" /> Carrito de orden
             </h2>
-            <button type="button" onClick={() => setCarrito([])} disabled={carrito.length === 0} className="flex items-center gap-2 rounded-lg px-2 py-1 text-sm hover:bg-white/10 disabled:opacity-50">
+            <button type="button" onClick={limpiar} disabled={carrito.length === 0} className="flex items-center gap-2 rounded-lg px-2 py-1 text-sm hover:bg-white/10 disabled:opacity-50">
               <Trash2 className="size-4" /> Limpiar
             </button>
           </header>
@@ -217,114 +276,88 @@ export default function PuntoVenta() {
             </select>
             <span className="ml-auto text-suave">{ETIQUETA_ORDEN[tipoOrden]}</span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="tabla min-w-[480px]">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th className="text-center!">Cant.</th>
-                  <th className="text-right!">P. Unit.</th>
-                  <th className="text-right!">Total</th>
-                  <th aria-label="Quitar" />
-                </tr>
-              </thead>
-              <tbody>
-                {carrito.map((i) => (
-                  <tr key={i.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <FotoProducto producto={i} className="size-11 shrink-0 rounded-lg" />
-                        <span className="text-texto">{i.nombre}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="mx-auto flex w-fit items-center rounded-lg border border-borde">
-                        <button type="button" className="px-2 py-1 hover:bg-superficie-2" onClick={() => cambiar(i.id, -1)} aria-label={`Quitar uno de ${i.nombre}`}>
-                          <Minus className="size-4" />
-                        </button>
-                        <span className="w-8 text-center font-semibold">{i.cantidad}</span>
-                        <button type="button" className="px-2 py-1 hover:bg-superficie-2 disabled:opacity-40" onClick={() => cambiar(i.id, 1)} disabled={i.cantidad >= i.disponibles} aria-label={`Agregar uno de ${i.nombre}`}>
-                          <Plus className="size-4" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="text-right">{money(i.precio)}</td>
-                    <td className="text-right font-semibold">{money(i.precio * i.cantidad)}</td>
-                    <td>
-                      <button type="button" onClick={() => quitar(i.id)} className="rounded p-1 text-texto hover:text-error" aria-label={`Quitar ${i.nombre}`}>
-                        <X className="size-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {carrito.length === 0 && <Vacio icon={ShoppingCart} titulo="La orden está vacía">Toca un platillo para agregarlo.</Vacio>}
-          </div>
-          <div className="mt-auto">
-            <dl className="space-y-1 border-t border-borde px-5 py-3 text-[0.95rem]">
-              <div className="flex justify-between">
-                <dt>Subtotal:</dt>
-                <dd>{money(subtotal)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>IVA 13 %:</dt>
-                <dd>{money(iva)}</dd>
-              </div>
-            </dl>
-            <div className="flex items-center justify-between bg-secundario px-5 py-3 font-display text-2xl font-bold text-primario">
-              <span>Total:</span>
-              <span>{money(total)}</span>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* Datos de cobro */}
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_1.6fr_1.2fr]">
-        <ClienteSelector cliente={cliente} onChange={setCliente} />
-        <section className="card anim-entrada p-4">
-          <h3 className="mb-3 flex items-center gap-2 font-display font-semibold text-texto">
-            <FileText className="size-5 text-primario" /> Tipo de comprobante
-          </h3>
-          <select className="campo h-12 font-display" value={comprobante} onChange={(e) => setComprobante(e.target.value)} aria-label="Tipo de comprobante">
-            <option value="FCF">Factura</option>
-            <option value="CCF">Crédito fiscal (CCF)</option>
-          </select>
-        </section>
-        <section className="card anim-entrada p-4">
-          <h3 className="mb-3 font-display font-semibold text-texto">Método de pago</h3>
-          <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="Método de pago">
-            {METODOS.map(({ id, label, sub, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={metodo === id}
-                onClick={() => setMetodo(id)}
-                className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-sm transition ${
-                  metodo === id ? 'border-primario bg-primario text-white' : 'border-borde bg-superficie text-texto hover:bg-superficie-2'
-                }`}
-              >
-                <Icon className={`size-7 ${id === 'bitcoin' && metodo !== id ? 'text-[#f7931a]' : ''}`} />
-                <span className="leading-tight">
-                  {label}
-                  {sub && <span className="block text-xs opacity-80">{sub}</span>}
-                </span>
+          {pedidoActivo && (
+            <p className="flex items-center gap-2 bg-acento/10 px-5 py-2 text-sm text-texto">
+              <Globe className="size-4 text-acento" /> Cobrando el pedido en línea <b>{pedidoActivo.numero}</b>
+              <button type="button" onClick={limpiar} className="ml-auto text-suave hover:text-error" aria-label="Dejar de cobrar este pedido">
+                <X className="size-4" />
               </button>
+            </p>
+          )}
+
+          <ul className="max-h-[300px] divide-y divide-borde overflow-y-auto">
+            {carrito.map((i) => (
+              <li key={i.id} className="flex items-center gap-3 px-4 py-2.5">
+                <FotoProducto producto={i} className="size-11 shrink-0 rounded-lg" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-texto">{i.nombre}</p>
+                  <p className="text-xs text-suave">{money(i.precio)} c/u</p>
+                </div>
+                <div className="flex items-center rounded-lg border border-borde">
+                  <button type="button" className="px-1.5 py-1 hover:bg-superficie-2" onClick={() => cambiar(i.id, -1)} aria-label={`Quitar uno de ${i.nombre}`}>
+                    <Minus className="size-3.5" />
+                  </button>
+                  <span className="w-6 text-center text-sm font-semibold">{i.cantidad}</span>
+                  <button type="button" className="px-1.5 py-1 hover:bg-superficie-2 disabled:opacity-40" onClick={() => cambiar(i.id, 1)} disabled={i.cantidad >= i.disponibles} aria-label={`Agregar uno de ${i.nombre}`}>
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+                <span className="w-16 text-right text-sm font-semibold">{money(i.precio * i.cantidad)}</span>
+                <button type="button" onClick={() => quitar(i.id)} className="text-suave hover:text-error" aria-label={`Quitar ${i.nombre}`}>
+                  <X className="size-4" />
+                </button>
+              </li>
             ))}
+          </ul>
+          {carrito.length === 0 && <Vacio icon={ShoppingCart} titulo="La orden está vacía">Toca un platillo para agregarlo.</Vacio>}
+
+          <dl className="space-y-1 border-t border-borde px-5 py-3 text-sm">
+            <div className="flex justify-between"><dt>Subtotal</dt><dd>{money(subtotal)}</dd></div>
+            <div className="flex justify-between"><dt>IVA 13 %</dt><dd>{money(iva)}</dd></div>
+          </dl>
+          <div className="flex items-center justify-between bg-secundario px-5 py-3 font-display text-2xl font-bold text-primario">
+            <span>Total</span>
+            <span>{money(total)}</span>
           </div>
-        </section>
-        <button
-          type="button"
-          onClick={iniciarCobro}
-          disabled={!puedeCobrar}
-          className="anim-entrada flex min-h-24 items-center justify-center gap-4 rounded-2xl bg-secundario font-display text-4xl font-bold text-primario shadow-[0_10px_24px_-10px_rgba(196,130,0,0.75)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-          title={caja?.estado !== 'abierta' ? 'Abre la caja para cobrar' : undefined}
-        >
-          {caja?.estado === 'abierta' ? <Receipt className="size-10" /> : <Lock className="size-9" />}
-          Cobrar
-        </button>
+
+          <div className="space-y-4 p-5">
+            <ClienteSelector cliente={cliente} onChange={setCliente} className="" />
+            <label className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-display font-medium text-texto">Comprobante</span>
+              <select className="campo w-auto font-display" value={comprobante} onChange={(e) => setComprobante(e.target.value)}>
+                <option value="FCF">Factura</option>
+                <option value="CCF">Crédito fiscal (CCF)</option>
+              </select>
+            </label>
+            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Método de pago">
+              {METODOS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={metodo === id}
+                  onClick={() => setMetodo(id)}
+                  className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-sm transition ${
+                    metodo === id ? 'border-primario bg-primario text-white' : 'border-borde bg-superficie text-texto hover:bg-superficie-2'
+                  }`}
+                >
+                  <Icon className={`size-6 ${id === 'bitcoin' && metodo !== id ? 'text-[#f7931a]' : ''}`} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={iniciarCobro}
+              disabled={!puedeCobrar}
+              className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-secundario font-display text-2xl font-bold text-primario shadow-[0_10px_24px_-12px_rgba(196,130,0,0.75)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              title={caja?.estado !== 'abierta' ? 'Abre la caja para cobrar' : undefined}
+            >
+              {caja?.estado === 'abierta' ? <Receipt className="size-7" /> : <Lock className="size-6" />}
+              Cobrar {carrito.length > 0 && money(total)}
+            </button>
+          </div>
+        </aside>
       </div>
 
       <CobroModal abierto={cobrando} onClose={() => setCobrando(false)} total={total} metodo={metodo} comprobante={comprobante} cliente={cliente} onConfirmar={confirmarVenta} />
@@ -334,7 +367,7 @@ export default function PuntoVenta() {
 }
 
 /** Búsqueda y alta rápida de clientes (necesario para CCF). */
-function ClienteSelector({ cliente, onChange }) {
+function ClienteSelector({ cliente, onChange, className = 'card anim-entrada p-4' }) {
   const { notify } = useApp();
   const [q, setQ] = useState('');
   const [abierto, setAbierto] = useState(false);
@@ -354,7 +387,7 @@ function ClienteSelector({ cliente, onChange }) {
   };
 
   return (
-    <section className="card anim-entrada relative p-4">
+    <section className={`relative ${className}`}>
       <h3 className="mb-3 flex items-center gap-2 font-display font-semibold text-texto">
         <User className="size-5 fill-primario text-primario" /> Cliente (Opcional)
       </h3>
