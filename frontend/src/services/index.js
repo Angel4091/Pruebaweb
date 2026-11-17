@@ -80,3 +80,16 @@ export const rrhhService = {
 export const pronosticoService = {
   obtener: (sucursalId, dias) => api.get('/pronostico', { sucursalId, dias }),
 };
+
+export const authService = {
+  login: (correo, password) => api.post('/auth/login', { correo, password }),
+  registro: (data) => api.post('/auth/registro', data),
+  yo: () => api.get('/auth/yo'),
+};
+
+export const pedidosService = {
+  listar: (sucursalId, params) => api.get('/pedidos', { sucursalId, ...params }),
+  mios: () => api.get('/pedidos/mios'),
+  crear: (data) => api.post('/pedidos', data),
+  cambiarEstado: (id, estado) => api.patch(`/pedidos/${id}/estado`, { estado }),
+};
