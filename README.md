@@ -21,7 +21,7 @@ Proyecto de Cátedra de **Programación Web — Ciclo 02, 2026**. Corresponde al
 
 ### Identidad maya
 
-El diseño toma elementos de la cultura maya: el logo de Orígenes SV (*¡Puchica, qué buen sabor!*), un templo con crestería, la ceiba sagrada y el quetzal en el encabezado, la greca escalonada (*xicalcoliuhqui*) en el menú y al pie de página, crestería escalonada bajo los encabezados, y en el inicio una **estela con la fecha de hoy en el calendario maya**: Cuenta Larga en numerales de puntos y barras, Tzolk'in y Haab' (correlación GMT 584283).
+El diseño toma elementos de la cultura maya: el logo de Orígenes SV (*¡Puchica, qué buen sabor!*), un templo con crestería, la ceiba sagrada y el quetzal en el encabezado, la greca escalonada (*xicalcoliuhqui*) al pie de página, un borde dorado de dientes escalonados en el menú lateral, una pequeña pirámide con escalinata bajo cada título, crestería escalonada bajo los encabezados de panel, íconos con esquinas en escalón y grecas en las tarjetas de indicadores, y un sol maya (inspirado en el glifo *K'in*) como indicador de carga.
 
 Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias libres; ver [créditos de imágenes](docs/creditos-imagenes.md).
 

@@ -84,7 +84,7 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 
 **Logo:** `Logo` (`components/decor/Decor.jsx`) usa el PNG transparente del logo como máscara CSS, así se pinta con cualquier color de la marca (dorado en el menú, azul en la barra superior). Si en Identidad Visual se sube un logo propio, se usa ese.
 
-**Calendario maya:** `utils/calendarioMaya.js` convierte la fecha al día juliano y aplica la correlación GMT (584283) para obtener la Cuenta Larga, el Tzolk'in (260 días) y el Haab' (365 días). `NumeroMaya` dibuja los numerales en base 20 (punto = 1, barra = 5, concha = 0). Valores de control: 21/12/2012 → 13.0.0.0.0, 4 Ajaw 3 K'ank'in.
+**Ornamentos mayas:** `components/decor/Decor.jsx` reúne las ilustraciones SVG propias: `EscenaEncabezado` (templo, ceiba y quetzal), `Greca` (xicalcoliuhqui), `Cresteria`, `OrnamentoTitulo`, `EsquinaGreca`, `BordeEscalonado` y `SolMaya`. La clase CSS `.escalonado` recorta los íconos de las tarjetas con esquinas en escalón (`clip-path`).
 
 **Tema:** los colores viven en variables CSS (`--c-primario`, `--c-secundario`, …) que Tailwind expone como clases (`bg-primario`, `text-texto`). El módulo Identidad Visual las modifica en tiempo real.
 
