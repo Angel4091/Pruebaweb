@@ -9,6 +9,7 @@
  * Uso por consola:  node database/seeds/seed.mjs --force
  */
 import fs from 'node:fs';
+import { hashPassword } from '../../backend/src/utils/seguridad.js';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -437,11 +438,89 @@ function generarPlanillas(now) {
   return planillas;
 }
 
+/**
+ * Usuarios de demostración, uno por rol. Las contraseñas se guardan cifradas (scrypt).
+ * Credenciales de prueba documentadas en el README.
+ */
+const USUARIOS_DEMO = [
+  { id: 'usr-admin', nombre: 'Andrea Morales', correo: 'admin@origenes.sv', rol: 'administrador', password: 'Admin2026!', sucursalId: 'suc-central', clienteId: null },
+  { id: 'usr-cajero', nombre: 'María López', correo: 'cajero@origenes.sv', rol: 'cajero', password: 'Cajero2026!', sucursalId: 'suc-central', clienteId: null },
+  { id: 'usr-cocina', nombre: 'Ana Rodríguez', correo: 'cocina@origenes.sv', rol: 'cocinero', password: 'Cocina2026!', sucursalId: 'suc-central', clienteId: null },
+  { id: 'usr-cliente', nombre: 'María José Alvarado', correo: 'cliente@origenes.sv', rol: 'cliente', password: 'Cliente2026!', sucursalId: null, clienteId: 'cli-maria' },
+];
+
+function generarUsuarios() {
+  return USUARIOS_DEMO.map(({ password, ...u }) => ({ ...u, activo: true, passwordHash: hashPassword(password) }));
+}
+
+/** Comandas de ejemplo para la cocina: las últimas ventas de hoy en la sucursal central y un pedido en línea. */
+function generarPedidos(ventas, now) {
+  const hoy = dateKey(now);
+  const recientes = ventas.filter((v) => v.sucursalId === 'suc-central' && dateKey(new Date(v.fecha)) === hoy).slice(-4);
+  const estados = ['listo', 'en_preparacion', 'recibido', 'recibido'];
+  const pedidos = recientes.map((v, i) => {
+    const estado = estados[i + (4 - recientes.length)] ?? 'recibido';
+    const pasos = ['recibido', 'en_preparacion', 'listo'].slice(0, ['recibido', 'en_preparacion', 'listo'].indexOf(estado) + 1);
+    return {
+      id: `ped-demo-${i + 1}`,
+      numero: `P-${pad(i + 1, 4)}`,
+      fecha: v.fecha,
+      origen: 'pos',
+      sucursalId: v.sucursalId,
+      tipoOrden: v.tipoOrden,
+      clienteId: v.clienteId,
+      usuarioId: null,
+      items: v.items,
+      subtotal: v.subtotal,
+      iva: v.iva,
+      total: v.total,
+      notas: '',
+      direccion: '',
+      metodoPago: v.metodoPago,
+      ventaId: v.id,
+      estado,
+      historial: pasos.map((e) => ({ estado: e, fecha: v.fecha })),
+    };
+  });
+  recientes.forEach((v, i) => {
+    v.pedidoId = pedidos[i].id;
+  });
+  const items = [
+    { productoId: 'prod-pupusa-revuelta', nombre: 'Pupusa revuelta', cantidad: 4, precioUnitario: 1.75, total: 7 },
+    { productoId: 'prod-horchata', nombre: 'Horchata de morro', cantidad: 2, precioUnitario: 1.25, total: 2.5 },
+  ];
+  const subtotal = 9.5;
+  const fecha = new Date(now.getTime() - 6 * 60000).toISOString();
+  pedidos.push({
+    id: 'ped-demo-linea',
+    numero: `P-${pad(pedidos.length + 1, 4)}`,
+    fecha,
+    origen: 'en_linea',
+    sucursalId: 'suc-central',
+    tipoOrden: 'para_llevar',
+    clienteId: 'cli-maria',
+    usuarioId: 'usr-cliente',
+    clienteNombre: 'María José Alvarado',
+    items,
+    subtotal,
+    iva: round2(subtotal * 0.13),
+    total: round2(subtotal * 1.13),
+    notas: 'Curtido aparte, por favor',
+    direccion: '',
+    metodoPago: 'tarjeta',
+    ventaId: null,
+    estado: 'recibido',
+    historial: [{ estado: 'recibido', fecha }],
+  });
+  return pedidos;
+}
+
 export function buildSeed(now = new Date()) {
   const { ventas, turnos, correlativos } = generarHistorial(now);
   const { compras, cuentasPorPagar } = generarCompras(now);
+  const pedidos = generarPedidos(ventas, now);
   return {
-    meta: { creado: now.toISOString(), version: 1 },
+    meta: { creado: now.toISOString(), version: 2 },
     configuracion,
     sucursales,
     cajas,
@@ -460,6 +539,9 @@ export function buildSeed(now = new Date()) {
     movimientosInventario: [],
     planillas: generarPlanillas(now),
     correlativoCompras: compras.length,
+    usuarios: generarUsuarios(),
+    pedidos,
+    correlativoPedidos: pedidos.length,
   };
 }
 
