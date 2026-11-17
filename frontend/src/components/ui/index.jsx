@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Cresteria } from '../decor/Decor.jsx';
-import { ChevronLeft, ChevronRight, X, Loader, TriangleAlert, CircleAlert, CircleCheck, Info } from 'lucide-react';
+import { Cresteria, EsquinaGreca, SolMaya, PiramideLogo } from '../decor/Decor.jsx';
+import { ChevronLeft, ChevronRight, X, Loader, TriangleAlert, CircleAlert, CircleCheck } from 'lucide-react';
 
 /* ---------- Botón ---------- */
 const VARIANTES = {
@@ -37,8 +37,10 @@ const TONOS = {
 
 export function StatCard({ icon: Icon, titulo, valor, detalle, tono = 'azul', acento = true, valorClass = '' }) {
   return (
-    <div className={`card anim-entrada flex items-center gap-4 p-4 sm:p-5 ${acento ? 'border-l-4! border-l-secundario!' : ''}`}>
-      <div className={`grid size-14 shrink-0 place-items-center rounded-full ${TONOS[tono]}`}>
+    <div className={`card anim-entrada relative flex items-center gap-4 overflow-hidden p-4 sm:p-5 ${acento ? 'border-l-4! border-l-secundario!' : ''}`}>
+      {/* Esquina con greca escalonada: detalle maya de las tarjetas de indicadores */}
+      <EsquinaGreca className="pointer-events-none absolute top-2 right-2 size-7 text-secundario/35" />
+      <div className={`escalonado grid size-14 shrink-0 place-items-center ${TONOS[tono]}`}>
         <Icon className="size-7" strokeWidth={2.2} />
       </div>
       <div className="min-w-0">
@@ -162,8 +164,8 @@ export function Pagination({ pagina, total, porPagina, onChange, etiqueta = 'reg
 /* ---------- Estados de carga, error y vacío ---------- */
 export function Cargando({ texto = 'Cargando…' }) {
   return (
-    <div className="flex items-center justify-center gap-2 p-8 text-suave">
-      <Loader className="size-5 animate-spin" /> {texto}
+    <div className="flex items-center justify-center gap-3 p-8 text-suave" role="status">
+      <SolMaya className="size-7 animate-[spin_3s_linear_infinite] text-secundario" /> {texto}
     </div>
   );
 }
@@ -183,7 +185,7 @@ export function ErrorBox({ error, onRetry }) {
   );
 }
 
-export function Vacio({ icon: Icon = Info, titulo, children }) {
+export function Vacio({ icon: Icon = PiramideLogo, titulo, children }) {
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-10 text-center text-suave">
       <Icon className="size-8 text-secundario" />

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { House, ShoppingCart, Package, Truck, Calculator, Users, TrendingUp, Palette, X } from 'lucide-react';
-import { Logo } from '../decor/Decor.jsx';
+import { Logo, BordeEscalonado } from '../decor/Decor.jsx';
 
 /** Módulos del sistema; se reutiliza en la guía y en los accesos rápidos. */
 // eslint-disable-next-line react-refresh/only-export-components
@@ -26,6 +26,7 @@ export function Sidebar({ abierto, onClose }) {
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-[124px] flex-col bg-sidebar text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${abierto ? 'translate-x-0' : '-translate-x-full'}`}
       >
+        <BordeEscalonado className="pointer-events-none absolute inset-y-0 right-0 opacity-70" />
         <div className="flex h-[96px] shrink-0 items-center justify-center [@media(max-height:760px)]:h-16">
           <Logo variante="figura" className="max-h-[72px] w-[78px] text-secundario [@media(max-height:760px)]:max-h-12 [@media(max-height:760px)]:w-[52px]" />
           <button type="button" onClick={onClose} className="absolute top-3 right-2 rounded p-1 hover:bg-white/10 lg:hidden" aria-label="Cerrar menú">

@@ -1,7 +1,7 @@
 /**
  * Ilustraciones de la identidad maya de Orígenes SV: templo con crestería,
- * ceiba sagrada, quetzal, greca escalonada (xicalcoliuhqui), numerales mayas
- * de puntos y barras, y el logo del restaurante.
+ * ceiba sagrada, quetzal, greca escalonada (xicalcoliuhqui), sol maya,
+ * ornamentos escalonados y el logo del restaurante.
  */
 import { useApp } from '../../context/AppContext.jsx';
 
@@ -41,32 +41,57 @@ export function PiramideLogo({ className = '', strokeWidth = 2.2 }) {
   );
 }
 
-/* ---------- Numerales mayas (base 20: punto = 1, barra = 5, concha = 0) ---------- */
+/* ---------- Ornamentos mayas pequeños ---------- */
 
-export function NumeroMaya({ valor, className = '', titulo }) {
-  const n = Math.max(0, Math.min(19, Math.floor(valor)));
-  const barras = Math.floor(n / 5);
-  const puntos = n % 5;
-  const alto = 8 + barras * 9 + (puntos ? 9 : 0);
+/** Ornamento bajo los títulos de página: pirámide escalonada con escalinata y una línea dorada. */
+export function OrnamentoTitulo({ className = '' }) {
   return (
-    <svg viewBox={`0 0 40 ${Math.max(alto, 24)}`} className={className} role="img" aria-label={titulo ?? `Numeral maya ${n}`} fill="currentColor">
-      {n === 0 ? (
-        // Concha: símbolo del cero.
-        <g fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
-          <path d="M5 14 C5 5 35 5 35 14 C35 21 5 21 5 14 Z" />
-          <path d="M11 11 C15 14 25 14 29 11 M13 16 C17 18 23 18 27 16" />
-        </g>
-      ) : (
-        <>
-          {Array.from({ length: puntos }, (_, i) => (
-            <circle key={`p${i}`} cx={20 + (i - (puntos - 1) / 2) * 8.5} cy="7" r="3.4" />
-          ))}
-          {Array.from({ length: barras }, (_, i) => (
-            <rect key={`b${i}`} x="3" y={(puntos ? 13 : 4) + i * 9} width="34" height="6" rx="3" />
-          ))}
-        </>
-      )}
+    <div className={`flex items-center gap-2 text-secundario ${className}`} aria-hidden="true">
+      <svg viewBox="0 0 30 14" className="h-3.5 w-[30px]" fill="currentColor">
+        <path d="M0 14V12H3V9H6V6H9V3H12V0H18V3H21V6H24V9H27V12H30V14Z" />
+        <rect x="13.5" y="4" width="3" height="10" fill="var(--c-fondo)" />
+      </svg>
+      <span className="h-[3px] w-20 rounded-full bg-secundario/80" />
+      <span className="size-1.5 rotate-45 bg-secundario" />
+      <span className="size-1.5 rotate-45 bg-secundario/50" />
+    </div>
+  );
+}
+
+/** Sol maya (inspirado en el glifo K'in, "sol / día"): se usa como indicador de carga. */
+export function SolMaya({ className = '' }) {
+  return (
+    <svg viewBox="0 0 40 40" className={className} aria-hidden="true">
+      <g fill="currentColor">
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+          <rect key={a} x="18" y="1" width="4" height="7" rx="1" transform={`rotate(${a} 20 20)`} />
+        ))}
+        <circle cx="20" cy="20" r="10" />
+      </g>
+      <path d="M20 12.5 L23 20 L20 27.5 L17 20 Z M12.5 20 L20 17 L27.5 20 L20 23 Z" fill="var(--c-fondo)" />
     </svg>
+  );
+}
+
+/** Esquina con greca escalonada para las tarjetas de indicadores. */
+export function EsquinaGreca({ className = '' }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="miter" aria-hidden="true">
+      <path d="M2 3H29V30" />
+      <path d="M2 9H23V16H16V23H23V30" />
+    </svg>
+  );
+}
+
+/** Borde vertical de dientes escalonados (como el remate de un textil maya) para el menú lateral. */
+export function BordeEscalonado({ className = '' }) {
+  const forma = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='16'%3E%3Cpath d='M0 0h2v3h2v3h2v4H4v3H2v3H0z'/%3E%3C/svg%3E\")";
+  return (
+    <div
+      aria-hidden="true"
+      className={`w-1.5 bg-secundario ${className}`}
+      style={{ maskImage: forma, WebkitMaskImage: forma, maskRepeat: 'repeat-y', WebkitMaskRepeat: 'repeat-y' }}
+    />
   );
 }
 
