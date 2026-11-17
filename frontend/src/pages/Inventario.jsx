@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { inventarioService, productosService, comprasService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
-import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Aviso, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
+import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { FotoProducto, FotoInsumo } from '../components/decor/FoodArt.jsx';
 import { money, qty, fecha, hora } from '../utils/format.js';
 
@@ -28,7 +28,6 @@ export default function Inventario() {
   const insumos = useFetch(() => inventarioService.insumos(sucursalId), [sucursalId, version]);
   const productos = useFetch(() => productosService.listar({ sucursalId }), [sucursalId, version]);
   const proveedores = useFetch(() => comprasService.proveedores(), []);
-  const alertas = useFetch(() => inventarioService.alertas(sucursalId), [sucursalId, version]);
 
   useEffect(() => setPagina(1), [filtro, busqueda, vista, sucursalId]);
 
@@ -59,16 +58,23 @@ export default function Inventario() {
   const r = resumen.data;
   return (
     <>
-      <PageHeader titulo="Inventario y recetas" subtitulo="Controla tus existencias y consulta las recetas" />
+      <PageHeader titulo="Inventario y recetas" subtitulo="Controla tus existencias y consulta las recetas">
+        <Button variante="contorno" icon={FileText} onClick={() => setModal({ tipo: 'recetas' })}>
+          Ver recetas
+        </Button>
+        <Button icon={Plus} onClick={() => setModal({ tipo: 'entrada' })}>
+          Registrar entrada
+        </Button>
+      </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard acento={false} icon={Box} tono="azul" titulo="Total de insumos" valor={r?.totalInsumos ?? '—'} />
         <StatCard acento={false} icon={TriangleAlert} tono="naranja" titulo="Productos por agotarse" valor={r?.porAgotarse ?? '—'} valorClass="text-naranja!" />
         <StatCard acento={false} icon={CircleCheck} tono="verde" titulo="Productos en stock" valor={r?.enStock ?? '—'} valorClass="text-exito!" />
         <StatCard acento={false} icon={ChartColumn} tono="azul" titulo="Valor en inventario" valor={r ? money(r.valorInventario) : '—'} />
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.25fr_1fr]">
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
         <Panel
           titulo={vista === 'insumos' ? 'Listado de insumos' : 'Productos empacados'}
           icon={Package}
@@ -227,28 +233,6 @@ export default function Inventario() {
         </Panel>
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_1fr]">
-        <Aviso
-          titulo="Alertas del sistema"
-          accion={
-            <button type="button" onClick={() => setFiltro('por_agotarse')} className="text-sm font-medium text-acento hover:underline">
-              Ver detalles →
-            </button>
-          }
-        >
-          {alertas.data?.length
-            ? `${alertas.data.length} ${alertas.data.length === 1 ? 'producto requiere' : 'productos requieren'} reabastecimiento: ${alertas.data.slice(0, 4).map((a) => a.nombre).join(', ')}${alertas.data.length > 4 ? '…' : ''}`
-            : 'Todos los insumos están sobre su stock mínimo.'}
-        </Aviso>
-        <div className="grid grid-cols-2 gap-4">
-          <Button className="h-full min-h-16 text-lg" icon={Plus} onClick={() => setModal({ tipo: 'entrada' })}>
-            Registrar entrada
-          </Button>
-          <Button variante="contorno" className="h-full min-h-16 text-lg" icon={FileText} onClick={() => setModal({ tipo: 'recetas' })}>
-            Ver recetas
-          </Button>
-        </div>
-      </div>
 
       <EntradaModal abierto={modal?.tipo === 'entrada'} item={modal?.item} insumos={insumos.data ?? []} productos={productos.data ?? []} sucursalId={sucursalId} onClose={() => setModal(null)} onGuardado={alGuardar} />
       <InsumoModal abierto={modal?.tipo === 'editar' || modal?.tipo === 'nuevo'} insumo={modal?.item} proveedores={proveedores.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} />
