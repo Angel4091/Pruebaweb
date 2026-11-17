@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar, MODULOS } from './Sidebar.jsx';
 import { Topbar } from './Topbar.jsx';
-import { BandaGreca, EscenaEncabezado } from '../decor/Decor.jsx';
+import { BandaGreca, EscenaEncabezado, OrnamentoTitulo } from '../decor/Decor.jsx';
 import { Modal, Toasts, ErrorBox, Cargando } from '../ui/index.jsx';
 import { useApp } from '../../context/AppContext.jsx';
 
@@ -25,7 +25,7 @@ export function Layout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar onMenu={() => setMenu(true)} onGuia={() => setGuia(true)} placeholder={PLACEHOLDERS[pathname]} />
         <main className="relative flex-1 px-4 pt-2 pb-10 sm:px-6 lg:px-10">
-          <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-40 w-[440px] xl:block lg:right-10" />
+          <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-28 w-[300px] md:block lg:right-10 lg:h-36 lg:w-[400px] xl:h-40 xl:w-[440px]" />
           {/* El contenido va sobre la ilustración del encabezado y con un ancho máximo cómodo de leer. */}
           <div className="relative z-[1] mx-auto w-full max-w-[1520px]">
             {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : config ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
@@ -70,6 +70,7 @@ export function PageHeader({ titulo, subtitulo, children }) {
     <div className="relative mb-7 flex flex-wrap items-end justify-between gap-4 pt-3">
       <div>
         <h1 className="font-display text-[2.1rem] leading-tight font-bold tracking-tight text-texto sm:text-[2.5rem]">{titulo}</h1>
+        <OrnamentoTitulo className="mt-2 mb-1" />
         {subtitulo && <p className="mt-1 text-lg text-texto/80">{subtitulo}</p>}
       </div>
       {children && <div className="relative z-10 flex flex-wrap items-center gap-3">{children}</div>}
