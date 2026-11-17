@@ -67,21 +67,27 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
 
   return (
     <header className="no-imprimir sticky top-0 z-20 bg-fondo/95 backdrop-blur">
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3 sm:px-6 lg:px-8">
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3 sm:px-6 lg:px-8 xl:gap-3">
         <button type="button" onClick={onMenu} className="rounded-lg p-2 text-primario hover:bg-superficie-2 lg:hidden" aria-label="Abrir menú">
           <Menu className="size-6" />
         </button>
-        <Link to="/identidad" className="group flex min-w-0 items-center gap-3 pr-2" title="Editar identidad visual">
-          <Logo variante="figura" className="hidden w-12 text-[var(--c-tinta)] sm:block" />
+        {/* El nombre del restaurante nunca se recorta: si falta espacio, se compactan los demás controles. */}
+        <Link to="/identidad" className="group flex shrink-0 items-center gap-3 pr-1" title="Editar identidad visual">
+          {/* En celular se oculta la figura del logo para dejar espacio al nombre (el menú lateral ya la muestra). */}
+          <span className="hidden sm:flex">
+            <Logo variante="figura" className="w-12 text-[var(--c-tinta)]" />
+          </span>
           <span className="hidden h-9 w-px bg-borde sm:block" />
-          <span className="truncate font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
-          <Pencil className="size-4 text-suave group-hover:text-primario" />
+          <span className="font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
+          <Pencil className="hidden size-4 text-suave group-hover:text-primario xl:block" />
         </Link>
 
-        <div ref={refSuc} className="relative ml-auto hidden md:block xl:ml-4">
-          <button type="button" className={pill} onClick={() => setMenu(menu === 'sucursal' ? null : 'sucursal')} aria-haspopup="listbox" aria-expanded={menu === 'sucursal'}>
+        <div ref={refSuc} className="relative ml-auto hidden shrink-0 md:block xl:ml-4">
+          <button type="button" className={pill} onClick={() => setMenu(menu === 'sucursal' ? null : 'sucursal')} aria-haspopup="listbox" aria-expanded={menu === 'sucursal'} title={sucursal?.nombre}>
             <Store className="size-5 text-primario" />
-            {sucursal?.nombre ?? 'Sucursal'}
+            {/* En pantallas medianas se muestra solo "Central" / "San Miguel". */}
+            <span className="xl:hidden">{sucursal?.nombre?.replace(/^Sucursal\s+/i, '') ?? 'Sucursal'}</span>
+            <span className="hidden xl:inline">{sucursal?.nombre ?? 'Sucursal'}</span>
             <ChevronDown className="size-4" />
           </button>
           {menu === 'sucursal' && (
@@ -105,7 +111,7 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           )}
         </div>
 
-        <div ref={refBuscar} className="relative hidden flex-1 lg:block lg:max-w-[260px] 2xl:max-w-sm">
+        <div ref={refBuscar} className="relative hidden min-w-11 flex-1 lg:block lg:max-w-[260px] 2xl:max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-texto" />
           <input
             value={q}
@@ -133,7 +139,8 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           )}
         </div>
 
-        <div className={`${pill} hidden xl:flex`} title="Fecha y turno actual">
+        {/* La fecha y el turno solo se muestran cuando sobra espacio en la barra. */}
+        <div className={`${pill} hidden shrink-0 min-[1380px]:flex`} title="Fecha y turno actual">
           <CalendarDays className="size-5 text-primario" />
           {fechaLarga(ahora)} · {turnoDe(ahora)}
         </div>
@@ -176,7 +183,7 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
         <button
           type="button"
           onClick={toggleModo}
-          className="hidden h-11 items-center gap-1 rounded-full border border-borde bg-superficie p-1 sm:flex"
+          className="hidden h-11 shrink-0 items-center gap-1 rounded-full border border-borde bg-superficie p-1 sm:flex"
           aria-label={modoOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
         >
           <span className={`grid size-9 place-items-center rounded-full ${!modoOscuro ? 'bg-secundario/30 text-[#d18a00]' : 'text-suave'}`}>
@@ -187,9 +194,9 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           </span>
         </button>
 
-        <button type="button" onClick={onGuia} className="flex h-11 items-center gap-2 rounded-full bg-primario px-4 font-display text-sm font-semibold text-white hover:brightness-110">
+        <button type="button" onClick={onGuia} className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-primario px-3.5 font-display text-sm font-semibold text-white hover:brightness-110 xl:px-4" aria-label="Guía rápida">
           <BookOpen className="size-5" />
-          <span className="hidden sm:inline">Guía</span>
+          <span className="hidden xl:inline">Guía</span>
         </button>
 
         <div className="relative grid size-11 shrink-0 place-items-center rounded-full bg-primario font-display font-bold text-white" title="Andrea Morales · Gerente general">
