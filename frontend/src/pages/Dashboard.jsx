@@ -7,7 +7,6 @@ import { PageHeader } from '../components/layout/Layout.jsx';
 import { StatCard, Variacion, Badge, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { LineChart, Barra } from '../components/charts/Charts.jsx';
 import { FotoProducto } from '../components/decor/FoodArt.jsx';
-import { EstelaMaya } from '../components/decor/EstelaMaya.jsx';
 import { money, saludo, qty } from '../utils/format.js';
 
 const horaCorta = (h) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
@@ -34,9 +33,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader titulo={saludo()} subtitulo="Resumen de operación de hoy">
-        <EstelaMaya className="xl:mr-[440px]" />
-      </PageHeader>
+      <PageHeader titulo={saludo()} subtitulo="Resumen de operación de hoy" />
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={ChartColumn} tono="azul" titulo="Ventas del día" valor={money(kpis.ventas.valor)} detalle={<Variacion valor={kpis.ventas.variacion} />} />
