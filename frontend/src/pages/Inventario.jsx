@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box, TriangleAlert, CircleCheck, ChartColumn, Package, Filter, Eye, Pencil, ChefHat, Utensils, Calculator, TrendingUp, Plus, FileText, Search, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { inventarioService, productosService, comprasService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
-import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Aviso, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
+import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
 import { FotoProducto, FotoInsumo } from '../components/decor/FoodArt.jsx';
 import { money, qty, fecha, hora } from '../utils/format.js';
 
@@ -17,6 +18,8 @@ const POR_PAGINA = 7;
 
 export default function Inventario() {
   const { sucursalId, notify, refrescar, version } = useApp();
+  // El cocinero consulta y registra entradas; crear o editar insumos y platillos es del administrador.
+  const esAdmin = useAuth().rol === 'administrador';
   const [vista, setVista] = useState('insumos');
   const [filtro, setFiltro] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -28,7 +31,6 @@ export default function Inventario() {
   const insumos = useFetch(() => inventarioService.insumos(sucursalId), [sucursalId, version]);
   const productos = useFetch(() => productosService.listar({ sucursalId }), [sucursalId, version]);
   const proveedores = useFetch(() => comprasService.proveedores(), []);
-  const alertas = useFetch(() => inventarioService.alertas(sucursalId), [sucursalId, version]);
 
   useEffect(() => setPagina(1), [filtro, busqueda, vista, sucursalId]);
 
@@ -59,16 +61,23 @@ export default function Inventario() {
   const r = resumen.data;
   return (
     <>
-      <PageHeader titulo="Inventario y recetas" subtitulo="Controla tus existencias y consulta las recetas" />
+      <PageHeader titulo="Inventario y recetas" subtitulo="Controla tus existencias y consulta las recetas">
+        <Button variante="contorno" icon={FileText} onClick={() => setModal({ tipo: 'recetas' })}>
+          Ver recetas
+        </Button>
+        <Button icon={Plus} onClick={() => setModal({ tipo: 'entrada' })}>
+          Registrar entrada
+        </Button>
+      </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard acento={false} icon={Box} tono="azul" titulo="Total de insumos" valor={r?.totalInsumos ?? '—'} />
         <StatCard acento={false} icon={TriangleAlert} tono="naranja" titulo="Productos por agotarse" valor={r?.porAgotarse ?? '—'} valorClass="text-naranja!" />
         <StatCard acento={false} icon={CircleCheck} tono="verde" titulo="Productos en stock" valor={r?.enStock ?? '—'} valorClass="text-exito!" />
         <StatCard acento={false} icon={ChartColumn} tono="azul" titulo="Valor en inventario" valor={r ? money(r.valorInventario) : '—'} />
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.25fr_1fr]">
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
         <Panel
           titulo={vista === 'insumos' ? 'Listado de insumos' : 'Productos empacados'}
           icon={Package}
@@ -99,7 +108,7 @@ export default function Inventario() {
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-suave" />
               <input className="campo py-1.5 pl-8" placeholder="Buscar…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar en el listado" />
             </div>
-            {vista === 'insumos' && (
+            {vista === 'insumos' && esAdmin && (
               <Button variante="suave" icon={Plus} className="py-1.5" onClick={() => setModal({ tipo: 'nuevo' })}>
                 Nuevo insumo
               </Button>
@@ -141,14 +150,14 @@ export default function Inventario() {
                               <Eye className="size-5" />
                             </button>
                           )}
-                          <button
+                          {(i.esReventa || esAdmin) && <button
                             type="button"
                             className="rounded-lg p-1.5 hover:bg-superficie-2"
                             onClick={() => setModal({ tipo: i.esReventa ? 'entrada' : 'editar', item: i })}
                             aria-label={i.esReventa ? `Registrar entrada de ${i.nombre}` : `Editar ${i.nombre}`}
                           >
                             {i.esReventa ? <Plus className="size-5" /> : <Pencil className="size-5" />}
-                          </button>
+                          </button>}
                         </div>
                       </td>
                     </tr>
@@ -227,33 +236,11 @@ export default function Inventario() {
         </Panel>
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_1fr]">
-        <Aviso
-          titulo="Alertas del sistema"
-          accion={
-            <button type="button" onClick={() => setFiltro('por_agotarse')} className="text-sm font-medium text-acento hover:underline">
-              Ver detalles →
-            </button>
-          }
-        >
-          {alertas.data?.length
-            ? `${alertas.data.length} ${alertas.data.length === 1 ? 'producto requiere' : 'productos requieren'} reabastecimiento: ${alertas.data.slice(0, 4).map((a) => a.nombre).join(', ')}${alertas.data.length > 4 ? '…' : ''}`
-            : 'Todos los insumos están sobre su stock mínimo.'}
-        </Aviso>
-        <div className="grid grid-cols-2 gap-4">
-          <Button className="h-full min-h-16 text-lg" icon={Plus} onClick={() => setModal({ tipo: 'entrada' })}>
-            Registrar entrada
-          </Button>
-          <Button variante="contorno" className="h-full min-h-16 text-lg" icon={FileText} onClick={() => setModal({ tipo: 'recetas' })}>
-            Ver recetas
-          </Button>
-        </div>
-      </div>
 
       <EntradaModal abierto={modal?.tipo === 'entrada'} item={modal?.item} insumos={insumos.data ?? []} productos={productos.data ?? []} sucursalId={sucursalId} onClose={() => setModal(null)} onGuardado={alGuardar} />
       <InsumoModal abierto={modal?.tipo === 'editar' || modal?.tipo === 'nuevo'} insumo={modal?.item} proveedores={proveedores.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} />
       <MovimientosModal abierto={modal?.tipo === 'ver'} insumo={modal?.item} sucursalId={sucursalId} onClose={() => setModal(null)} />
-      <RecetasModal abierto={modal?.tipo === 'recetas'} productos={productos.data ?? []} insumos={insumos.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} onVer={(id) => { setProductoReceta(id); setModal(null); }} />
+      <RecetasModal puedeCrear={esAdmin} abierto={modal?.tipo === 'recetas'} productos={productos.data ?? []} insumos={insumos.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} onVer={(id) => { setProductoReceta(id); setModal(null); }} />
     </>
   );
 }
@@ -445,7 +432,7 @@ function MovimientosModal({ abierto, insumo, sucursalId, onClose }) {
 }
 
 /** Lista de recetas y alta de un nuevo platillo con su receta. */
-function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer }) {
+function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer, puedeCrear }) {
   const { notify } = useApp();
   const { data: categorias } = useFetch(() => productosService.categorias(), []);
   const [creando, setCreando] = useState(false);
@@ -474,11 +461,13 @@ function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer 
     <Modal abierto={abierto} onClose={onClose} titulo={creando ? 'Nuevo platillo' : `Recetas del menú (${elaborados.length} platillos)`} ancho="max-w-3xl">
       {!creando ? (
         <>
-          <div className="mb-3 flex justify-end">
-            <Button icon={Plus} onClick={() => setCreando(true)}>
-              Nuevo platillo
-            </Button>
-          </div>
+          {puedeCrear && (
+            <div className="mb-3 flex justify-end">
+              <Button icon={Plus} onClick={() => setCreando(true)}>
+                Nuevo platillo
+              </Button>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="tabla min-w-[560px]">
               <thead>
