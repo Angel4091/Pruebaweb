@@ -2,6 +2,24 @@
 
 Este manual explica cómo usar cada módulo del sistema en el día a día de una sucursal.
 
+## Iniciar sesión
+
+1. Abre la página y escribe tu correo y contraseña.
+2. Según tu rol, el sistema te lleva a tu pantalla de inicio y el menú lateral muestra solo tus módulos.
+3. Para salir, toca tu avatar (arriba a la derecha) y elige **Cerrar sesión**.
+
+Los clientes pueden crear su cuenta con **Crea tu cuenta de cliente**.
+
+## Para clientes: ordenar en línea
+
+1. En **Menú**, filtra por categoría o busca un platillo y toca **Agregar**.
+2. En *Tu pedido* elige **Paso a recoger** o **A domicilio** (escribe la dirección) y cómo pagarás.
+3. Toca **Hacer pedido**. En **Mis pedidos** verás el avance: Recibido → En preparación → Listo → Entregado. Puedes cancelarlo mientras esté "Recibido".
+
+## Para cocina
+
+En **Cocina** las comandas se ordenan en tres columnas. Toca **Empezar a preparar** y luego **Marcar como listo**. Los pedidos en línea muestran "Pendiente de cobro" hasta que caja los cobre. El tablero se actualiza solo cada 10 segundos.
+
 ## Antes de empezar
 
 - **Sucursal activa:** en la barra superior elige *Sucursal Central* o *Sucursal San Miguel*. Todos los módulos muestran los datos de la sucursal elegida.

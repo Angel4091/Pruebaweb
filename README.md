@@ -25,6 +25,32 @@ El diseño toma elementos de la cultura maya: el logo de Orígenes SV (*¡Puchic
 
 Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias libres; ver [créditos de imágenes](docs/creditos-imagenes.md).
 
+## 🔐 Inicio de sesión y roles
+
+Al abrir la página se pide iniciar sesión. Cada rol ve solo sus módulos, y la API rechaza (403) cualquier acción fuera de sus permisos.
+
+| Rol | Ve | Pantalla de inicio |
+|---|---|---|
+| **Administrador** (dueño / gerente) | Todo: tablero, ventas, cocina, caja, inventario, pronóstico, compras, personal e identidad visual | Inicio |
+| **Cajero** | Punto de venta, Cocina (para entregar) y Caja | Punto de venta |
+| **Cocinero** | Cocina, Inventario (consulta y entradas) y Pronóstico | Cocina |
+| **Cliente** | Menú para ordenar y Mis pedidos (sin estadísticas del restaurante) | Menú |
+
+**Flujo de un pedido en línea:** el cliente ordena en el Menú → la cocina lo ve en "Recibidos" y lo avanza a "En preparación" y "Listo" → el cajero lo cobra en el Punto de venta (sección *Pedidos en línea por cobrar*) → se marca como entregado. Las ventas hechas en caja también generan su comanda para la cocina.
+
+Las contraseñas se guardan cifradas con *scrypt* y la sesión usa un token firmado (HMAC-SHA256) que vence en 8 horas. Los clientes pueden crear su propia cuenta desde "Crea tu cuenta de cliente".
+
+### Usuarios de prueba
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Administrador | admin@origenes.sv | Admin2026! |
+| Cajero | cajero@origenes.sv | Cajero2026! |
+| Cocinero | cocina@origenes.sv | Cocina2026! |
+| Cliente | cliente@origenes.sv | Cliente2026! |
+
+> Son cuentas de demostración creadas por los *seeds*. En desarrollo, la pantalla de inicio de sesión tiene botones que llenan estos datos. En producción hay que definir `JWT_SECRET` y cambiar estas contraseñas.
+
 ## 🛠️ Tecnologías
 
 - **Frontend:** React 19 + Vite, React Router, Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`, `useContext`, hooks propios), Tailwind CSS 4, íconos Lucide.
@@ -76,7 +102,7 @@ npm run dev
 - Web: http://localhost:5173
 - API: http://localhost:3000/api
 
-La primera vez que arranca, la API crea `database/data.json` a partir de los seeds. Para volver a los datos iniciales:
+La primera vez que arranca, la API crea `database/data.json` a partir de los seeds. El historial de ventas se genera **relativo al día en que se ejecuta**, así que antes de una demostración conviene regenerarlo para que el tablero muestre las ventas "de hoy":
 
 ```bash
 npm run seed

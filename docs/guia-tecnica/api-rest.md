@@ -12,6 +12,31 @@ Base: `http://localhost:3000/api` · Formato: JSON · Errores: `{ "error": "mens
 | 422 | Datos inválidos (validaciones) |
 | 500 | Error interno |
 
+## Autenticación
+
+Todas las rutas, salvo las públicas, requieren el encabezado `Authorization: Bearer <token>`. Sin token → **401**; con un rol sin permiso → **403**.
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/auth/login` | Público | `{ correo, password }` → `{ token, usuario }` |
+| POST | `/auth/registro` | Público | Crea una cuenta de **cliente** y devuelve su sesión |
+| GET | `/auth/yo` | Con sesión | Datos del usuario del token |
+| GET | `/configuracion`, `/sucursales` | Público | Marca y sucursales (para la pantalla de acceso) |
+
+Permisos por rol: **administrador** todo · **cajero** ventas, caja, clientes y pedidos · **cocinero** pedidos, inventario, recetas y pronóstico · **cliente** menú y sus pedidos.
+
+## Pedidos (cocina y en línea)
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/pedidos?sucursalId=&activos=true` | Admin, cajero, cocina | Comandas en proceso (tablero de cocina) |
+| GET | `/pedidos?sucursalId=&porCobrar=true` | Admin, cajero, cocina | Pedidos en línea sin cobrar |
+| GET | `/pedidos/mios` | Cliente | Pedidos del cliente |
+| POST | `/pedidos` | Cliente | `{ sucursalId, tipoOrden, items, metodoPago, direccion, notas }` |
+| PATCH | `/pedidos/:id/estado` | Todos (con reglas) | `{ estado }`: recibido → en_preparacion → listo → entregado, o cancelado |
+
+Para cobrar un pedido en línea se envía `pedidoId` en `POST /ventas`. Un pedido en línea no se puede entregar sin cobrar (409).
+
 ## General
 
 | Método | Ruta | Descripción |
