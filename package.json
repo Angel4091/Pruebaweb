@@ -4,12 +4,16 @@
   "private": true,
   "description": "ERP y POS para Restaurante Orígenes SV — Proyecto de Cátedra de Programación Web 2026",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
-    "dev": "concurrently -n api,web -c blue,yellow \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
-    "start": "npm run build --prefix frontend && npm start --prefix backend",
-    "seed": "node database/seeds/seed.mjs --force",
-    "test": "npm test --prefix backend"
+    "setup": "npm ci && npm ci --prefix apps/backend && npm ci --prefix apps/frontend",
+    "dev": "concurrently -n api,web -c blue,yellow \"npm run dev --prefix apps/backend\" \"npm run dev --prefix apps/frontend\"",
+    "db:seed": "node database/seeds/seed.mjs --force",
+    "build": "npm run build --prefix apps/frontend",
+    "start": "npm start --prefix apps/backend",
+    "test": "npm test --prefix apps/backend"
   },
   "devDependencies": {
     "concurrently": "^10.0.7"
