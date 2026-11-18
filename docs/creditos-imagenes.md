@@ -1,10 +1,10 @@
 # Créditos de imágenes
 
-Las fotografías de platillos e insumos provienen de [Wikimedia Commons](https://commons.wikimedia.org) y se usan bajo sus licencias libres (Creative Commons o dominio público). Se descargaron en tamaño reducido (500 px) y se sirven desde `frontend/public/img/`.
+Las fotografías de platillos e insumos provienen de [Wikimedia Commons](https://commons.wikimedia.org) y se usan bajo sus licencias libres (Creative Commons o dominio público). Se descargaron en tamaño reducido (500 px) y se sirven desde `apps/frontend/public/img/`.
 
 Las licencias CC BY y CC BY-SA exigen dar crédito al autor e indicar la licencia, lo cual se cumple con este documento. Si una foto se modifica, la obra derivada con CC BY-SA debe compartirse bajo la misma licencia.
 
-El logo de Orígenes SV (`frontend/public/img/logo/`) pertenece al equipo del proyecto. Cuando un producto o insumo no tiene foto, el sistema muestra una ilustración vectorial propia.
+El logo de Orígenes SV (`apps/frontend/public/img/logo/`) pertenece al equipo del proyecto. Cuando un producto o insumo no tiene foto, el sistema muestra una ilustración vectorial propia.
 
 ## Platillos y productos
 
