@@ -96,7 +96,7 @@ Copia `backend/.env.example` a `backend/.env` si necesitas cambiar el puerto, el
 
 - `main`: versión estable y entregable
 - `develop`: integración del trabajo del equipo
-- `feature/<modulo>-<descripcion>`: nuevas funcionalidades (salen de `develop`)
+- `feature/<nombre>/<ticket>`: una rama por ticket (sale de `develop` y vuelve por pull request)
 
 Formato de commits: `[gitmoji] [prefijo]: descripción` — por ejemplo `✨ feat: Agrega la toma de pedidos en el POS`. Detalle en [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -106,7 +106,9 @@ Formato de commits: `[gitmoji] [prefijo]: descripción` — por ejemplo `✨ fea
 - [Manual técnico](docs/manual-tecnico/README.md)
 - [Guía técnica de la API REST](docs/guia-tecnica/api-rest.md)
 - Informe IEEE: `docs/investigacion-ieee/`
-- Seguimiento de actividades: `docs/seguimiento/`
+- [Seguimiento de tickets por integrante](docs/seguimiento/seguimiento.csv)
+- [Registro de decisiones](docs/decisiones.md)
+- [Lineamientos del proyecto](docs/lineamientos.pdf) y [material de clase](docs/clases/README.md)
 
 ## 🤖 Declaración de uso de IA
 
