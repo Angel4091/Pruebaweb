@@ -1,6 +1,6 @@
 ﻿ticket,fase,area,integrante,descripcion,rama,estado,pull_request,inicio,fin,notas
 OP-000,0,OP,Angel4091,"Agrega lineamientos, clases, registro de decisiones, flujo de ramas y este seguimiento",feature/angel/OP-000,en revisión,,2026-11-18,,
-OP-001,1,OP,Integrante 8,"Mueve backend y frontend a apps/ y agrega los scripts setup, dev, db:init, db:seed, build y start",,pendiente,,,,D-08
+OP-001,1,OP,Angel4091,"Mueve backend y frontend a apps/ y agrega los scripts setup, dev, db:seed, build y start (db:init llega con DB-003)",feature/angel/OP-001,en revisión,,2026-11-18,,"D-08; reasignado del Integrante 8"
 DB-001,2,DB,Integrante 1,"Escribe database/schema.sql con checks, llaves foráneas, índices, bitácora y versión",,pendiente,,,,"D-06, D-19"
 DB-002,2,DB,Integrante 1,Escribe el seed en SQL y crea los usuarios con bcrypt desde SEED_PASSWORD,,pendiente,,,,D-04
 DB-003,2,DB,Integrante 1,"Agrega db:init, db:seed, el pool de pg y docker-compose solo para PostgreSQL",,pendiente,,,,D-11
