@@ -1,0 +1,33 @@
+﻿ticket,fase,area,integrante,descripcion,rama,estado,pull_request,inicio,fin,notas
+OP-000,0,OP,Angel4091,"Agrega lineamientos, clases, registro de decisiones, flujo de ramas y este seguimiento",feature/angel/OP-000,en revisión,,2026-11-18,,
+OP-001,1,OP,Integrante 8,"Mueve backend y frontend a apps/ y agrega los scripts setup, dev, db:init, db:seed, build y start",,pendiente,,,,D-08
+DB-001,2,DB,Integrante 1,"Escribe database/schema.sql con checks, llaves foráneas, índices, bitácora y versión",,pendiente,,,,"D-06, D-19"
+DB-002,2,DB,Integrante 1,Escribe el seed en SQL y crea los usuarios con bcrypt desde SEED_PASSWORD,,pendiente,,,,D-04
+DB-003,2,DB,Integrante 1,"Agrega db:init, db:seed, el pool de pg y docker-compose solo para PostgreSQL",,pendiente,,,,D-11
+BE-010,2,BE,Integrante 3,Repositorio de ventas y registro de la venta en una transacción,,pendiente,,,,
+BE-012,2,BE,Integrante 3,Repositorio de caja y cierre de turno en una transacción,,pendiente,,,,
+BE-020,2,BE,Integrante 4,"Repositorios de inventario y recetas en g, ml y unidad",,pendiente,,,,D-15
+BE-021,2,BE,Integrante 4,Repositorio de compras; compra y cuenta por pagar en una transacción,,pendiente,,,,
+BE-030,2,BE,Integrante 5,Repositorio de RR. HH. y generación de planilla en una transacción,,pendiente,,,,
+BE-031,2,BE,Integrante 5,Pronóstico leyendo de PostgreSQL,,pendiente,,,,D-16
+BE-001,3,BE,Integrante 2,Módulo auth: login y me con bcrypt y JWT (HS256 con issuer y audience),,pendiente,,,,
+BE-002,3,BE,Integrante 2,"Middlewares de autenticación (401), roles (403) y sucursal",,pendiente,,,,D-04
+BE-003,3,BE,Integrante 2,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",,pendiente,,,,"D-09, D-20"
+BE-004,3,BE,Integrante 2,"Usuarios y accesos: crear, asignar rol y sucursal, desactivar",,pendiente,,,,D-18
+FE-001,4,FE,Integrante 6,Pantalla de inicio de sesión con el estilo actual,,pendiente,,,,D-13
+FE-002,4,FE,Integrante 6,Sesión y token en api.js; la sesión vencida vuelve al login,,pendiente,,,,
+FE-003,4,FE,Integrante 6,Menú y acciones según el rol,,pendiente,,,,D-04
+FE-004,4,FE,Integrante 6,"Módulo Administración: accesos, bitácora y datos de demo",,pendiente,,,,D-18
+FE-005,4,FE,Integrante 6,Guía rápida con los módulos del rol,,pendiente,,,,
+BE-011,5,BE,Integrante 3,IVA incluido en la factura de consumidor final y desglosado en el crédito fiscal,,pendiente,,,,D-14
+BE-013,5,BE,Integrante 3,Quién registró y versión en ventas y compras; 409 al editar productos o insumos con datos viejos,,pendiente,,,,D-19
+BE-022,5,BE,Integrante 4,"CRUD completo de clientes, insumos y proveedores (eliminar es desactivar)",,pendiente,,,,D-05
+BE-032,5,BE,Integrante 5,Bitácora de auditoría y paginación en el servidor,,pendiente,,,,
+BE-033,5,BE,Integrante 5,Consulta de la bitácora con filtros,,pendiente,,,,
+QA-001,1-5,QA,Integrante 7,Pruebas con node:test de servicios y rutas,,pendiente,,,,
+QA-002,5,QA,Integrante 7,Colección de Postman con todos los endpoints,,pendiente,,,,
+QA-003,1-6,QA,Integrante 7,Venta completa y prueba en un clon limpio al cerrar cada fase,,pendiente,,,,D-11
+OP-002,6,OP,Integrante 8,deploy/nginx.conf con proxy inverso y HTTPS,,pendiente,,,,D-12
+DOC-001,7,DOC,Integrante 8,"Arquitectura (Mermaid), endpoints, manual de usuario, requisitos técnicos y uso de IA",,pendiente,,,,
+DOC-002,7,DOC,Integrante 8,Guía de defensa,,pendiente,,,,
+DOC-003,7,DOC,Todos,Informe IEEE (coordina Integrante 8),,pendiente,,,,
