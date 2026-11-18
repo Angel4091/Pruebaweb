@@ -1,0 +1,27 @@
+# PostgreSQL para desarrollo. Solo levanta la base de datos; la API y la web
+# corren con `npm run dev`. Lee las credenciales de apps/backend/.env:
+#   npm run db:up      → levanta el contenedor
+#   npm run db:down    → lo detiene (los datos quedan en el volumen)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: origenes-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-origenes}
+      POSTGRES_USER: ${DB_USER:-origenes}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en apps/backend/.env}
+      DB_NAME_TEST: ${DB_NAME_TEST:-origenes_test}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - origenes-datos:/var/lib/postgresql/data
+      - ./database/docker:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  origenes-datos:
