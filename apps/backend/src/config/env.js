@@ -18,8 +18,20 @@ const entero = (valor, porDefecto) => {
 export const config = {
   entorno: process.env.NODE_ENV || 'development',
   port: entero(process.env.PORT, 3000),
-  corsOrigin: process.env.CORS_ORIGIN || '*',
+  // Solo este origen puede llamar a la API desde el navegador.
+  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  // Detrás de Nginx: número de proxies de confianza, para que el límite de peticiones vea la IP real.
+  trustProxy: entero(process.env.TRUST_PROXY, 0),
+  // Peticiones por minuto que acepta la API desde una misma IP.
+  limitePorMinuto: entero(process.env.RATE_LIMIT_POR_MINUTO, 300),
   schemaFile: path.resolve(backendRoot, '../../database/schema.sql'),
+  jwt: {
+    secret: process.env.JWT_SECRET || '',
+    expiresIn: process.env.JWT_EXPIRES_IN || '8h',
+    issuer: 'origenes-sv-api',
+    audience: 'origenes-sv-web',
+    algorithm: 'HS256',
+  },
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: entero(process.env.DB_PORT, 5432),
@@ -31,3 +43,18 @@ export const config = {
   },
   seedPassword: process.env.SEED_PASSWORD || '',
 };
+
+export const esProduccion = config.entorno === 'production';
+
+/**
+ * Revisa al arrancar que la configuración de seguridad sea válida.
+ * Devuelve la lista de problemas (vacía si todo está bien).
+ */
+export function problemasDeSeguridad() {
+  const problemas = [];
+  if (config.jwt.secret.length < 32) {
+    problemas.push('JWT_SECRET falta o es muy corto: genera uno con "openssl rand -hex 32" (uno distinto por ambiente).');
+  }
+  if (esProduccion && config.corsOrigin === '*') problemas.push('CORS_ORIGIN no puede ser "*" en producción.');
+  return problemas;
+}
