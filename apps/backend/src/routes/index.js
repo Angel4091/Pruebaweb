@@ -3,6 +3,7 @@ import { autenticar } from '../middlewares/auth.js';
 import { limitarASuSucursal } from '../middlewares/roles.js';
 import auth from '../modules/auth/auth.routes.js';
 import general, { rutasPublicas } from '../modules/general/general.routes.js';
+import usuarios from '../modules/usuarios/usuarios.routes.js';
 import tablero from '../modules/tablero/tablero.routes.js';
 import ventas from '../modules/ventas/ventas.routes.js';
 import productos from '../modules/productos/productos.routes.js';
@@ -33,7 +34,7 @@ router.use(rutasPublicas);
 router.use(auth);
 
 router.use(autenticar, limitarASuSucursal);
-for (const modulo of [general, tablero, ventas, productos, inventario, caja, compras, rrhh, pronostico]) {
+for (const modulo of [general, usuarios, tablero, ventas, productos, inventario, caja, compras, rrhh, pronostico]) {
   router.use(modulo);
 }
 
