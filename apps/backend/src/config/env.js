@@ -19,8 +19,6 @@ export const config = {
   entorno: process.env.NODE_ENV || 'development',
   port: entero(process.env.PORT, 3000),
   corsOrigin: process.env.CORS_ORIGIN || '*',
-  dataFile: path.resolve(backendRoot, process.env.DATA_FILE || '../../database/data.json'),
-  seedFile: path.resolve(backendRoot, '../../database/seeds/seed.mjs'),
   schemaFile: path.resolve(backendRoot, '../../database/schema.sql'),
   db: {
     host: process.env.DB_HOST || 'localhost',

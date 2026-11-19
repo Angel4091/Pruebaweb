@@ -6,11 +6,8 @@
  * de forma determinística respecto a la fecha actual, para que el tablero y el
  * pronóstico siempre tengan datos recientes.
  *
- * Uso por consola:  node database/seeds/seed.mjs --force
+ * Se carga en PostgreSQL con: npm run db:seed (ver apps/backend/src/config/datos-demo.js).
  */
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   calcularDetalleEmpleado,
   totalizarPlanilla,
@@ -461,18 +458,4 @@ export function buildSeed(now = new Date()) {
     planillas: generarPlanillas(now),
     correlativoCompras: compras.length,
   };
-}
-
-// Ejecución directa: node database/seeds/seed.mjs [--force]
-const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
-if (isMain) {
-  const dir = path.dirname(fileURLToPath(import.meta.url));
-  const target = path.resolve(dir, '..', 'data.json');
-  if (fs.existsSync(target) && !process.argv.includes('--force')) {
-    console.log('La base de datos ya existe. Usa --force para reiniciarla.');
-  } else {
-    const data = buildSeed();
-    fs.writeFileSync(target, JSON.stringify(data, null, 2));
-    console.log(`🌱 Seeds cargados: ${data.productos.length} productos, ${data.insumos.length} insumos, ${data.ventas.length} ventas históricas.`);
-  }
 }
