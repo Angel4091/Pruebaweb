@@ -82,6 +82,7 @@ Requisitos: **Node.js 22.12 o superior**, npm y **Docker Desktop** (o un Postgre
 2. Copia `apps/backend/.env.example` como `apps/backend/.env` y completa:
    - `DB_PASSWORD`: cualquier contraseña para tu base local.
    - `SEED_PASSWORD`: la contraseña de los usuarios de prueba (12 caracteres o más).
+   - `JWT_SECRET`: el secreto que firma las sesiones. Genéralo con `openssl rand -hex 32` (usa otro distinto en producción). Sin él, la API no arranca.
 
 3. Levanta PostgreSQL, crea las tablas y carga los datos de demo:
 
@@ -100,7 +101,7 @@ Requisitos: **Node.js 22.12 o superior**, npm y **Docker Desktop** (o un Postgre
 - Web: http://localhost:5173
 - API: http://localhost:3000/api (`/api/salud` confirma que la base responde)
 
-`npm run db:seed` también sirve para volver a los datos iniciales. Crea un usuario por rol (`admin`, `gerente`, `cajero` y `barista`, todos `@origenes.test`) con la contraseña de `SEED_PASSWORD`; el inicio de sesión llega en la Fase 3.
+`npm run db:seed` también sirve para volver a los datos iniciales. Crea un usuario por rol (`admin`, `gerente`, `cajero` y `barista`, todos `@origenes.test`) con la contraseña de `SEED_PASSWORD`. Con ellos se inicia sesión en la web; cada rol ve solo sus módulos y su sucursal (el admin ve todas).
 
 Pruebas del backend (usan la base `origenes_test`, separada de la de desarrollo; PostgreSQL debe estar levantado):
 

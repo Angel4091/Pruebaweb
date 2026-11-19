@@ -165,3 +165,15 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Fuentes:** las pruebas del backend ahora necesitan PostgreSQL.
 - **Decisión:** `npm test` usa la base `origenes_test` (la crea el contenedor de Docker) y la vuelve a cargar con los datos de demo antes de cada archivo. Nunca toca la base de desarrollo. Si PostgreSQL no está levantado, las pruebas que lo necesitan se omiten con un aviso.
 - **Fase:** 2.
+
+## D-27 · Sesión con JWT de 8 horas
+- **Fuentes:** la clase 08 firma el token con HS256 y lo verifica con emisor y audiencia; el turno de una cafetería dura unas 8 horas; la pantalla de login necesita el logo y los colores antes de iniciar sesión.
+- **Decisión:** el token dura 8 horas (`JWT_EXPIRES_IN`) y la API no arranca sin un `JWT_SECRET` de al menos 32 caracteres. Son públicas solo `/salud`, la configuración visual (lectura) y el login. En cada petición se vuelve a leer el usuario de la base, así una desactivación o un cambio de rol aplican de inmediato. Las consultas que el POS necesita (menú, cajas, clientes, proveedores para Inventario) están abiertas a todos los roles; las que modifican, no.
+- **Motivo:** cubrir un turno completo sin pedir la contraseña a media jornada, sin dejar la API abierta.
+- **Fase:** 3.
+
+## D-28 · El gerente trabaja solo con su sucursal
+- **Fuentes:** D-04 da al gerente Compras y Personal, pero la planilla es de toda la empresa y la paga la administración.
+- **Decisión:** el gerente ve compras, cuentas por pagar, órdenes, empleados y la planilla solo de su sucursal (las líneas de su personal y sus totales). Generar y pagar la planilla es solo del admin. Al registrar un empleado, el gerente lo hace siempre en su sucursal.
+- **Motivo:** cada gerente responde por su sucursal; los pagos de toda la empresa los aprueba el admin.
+- **Fase:** 3 (backend) y 4 (frontend).
