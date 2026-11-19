@@ -138,17 +138,7 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 
 ## 4. Requisitos técnicos del proyecto y dónde se cumplen
 
-| Requisito | Ubicación |
-|---|---|
-| `let` / `const`, funciones y métodos | Todo el código; p. ej. `utils/planilla.js`, `services/*.js` |
-| Tipos string, number, boolean, object | Modelos de datos en `database/seeds/seed.mjs` |
-| Arreglos e iteradores en React | `map`, `filter`, `reduce` en todas las páginas (catálogo, tablas, gráficas) |
-| Hooks de React | `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useContext`, hooks propios |
-| Componentes y Tailwind | `components/ui`, `components/layout` |
-| Enrutador | `routes/AppRouter.jsx` (React Router 7) |
-| Promesas y asincronía | `services/api.js`, `Promise.all` en `AppContext.jsx` |
-| Patrón REST y HTTP | `apps/backend/src/modules/*/*.routes.js` (GET, POST, PUT, PATCH, DELETE; 200, 201, 400, 404, 409, 413, 422, 500, 503) |
-| try/catch y manejo de errores | `api.js`, páginas (`try/catch` en cada acción), `middlewares/errorHandler.js` |
+Están en [`docs/requisitos-tecnicos.md`](../requisitos-tecnicos.md): los 14 requisitos de los lineamientos con enlaces al archivo y la línea exacta donde se cumplen. Los diagramas de la arquitectura y el modelo entidad-relación están en [`docs/arquitectura.md`](../arquitectura.md).
 
 ## 5. Despliegue
 
