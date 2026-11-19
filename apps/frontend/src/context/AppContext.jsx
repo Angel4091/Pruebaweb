@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { generalService } from '../services/index.js';
+import { useAuth } from './AuthContext.jsx';
 
 /**
  * Estado global de la aplicación:
- * - sucursal activa (persistida en localStorage)
+ * - sucursal activa (el admin la elige y queda en localStorage; los demás roles usan la suya)
  * - configuración de marca (colores, fuentes, componentes) aplicada como variables CSS
  * - modo claro / oscuro
  * - notificaciones tipo "toast"
@@ -41,20 +42,23 @@ export function aplicarTema(config, modoOscuro) {
 }
 
 export function AppProvider({ children }) {
+  const { usuario } = useAuth();
   const [sucursales, setSucursales] = useState([]);
-  const [sucursalId, setSucursalIdState] = useState(() => leer('origenes.sucursal', 'suc-central'));
+  const [sucursalesListas, setSucursalesListas] = useState(false);
+  const [sucursalElegida, setSucursalElegida] = useState(() => leer('origenes.sucursal', 'suc-central'));
   const [config, setConfig] = useState(null);
   const [modoOscuro, setModoOscuro] = useState(() => leer('origenes.modo', '') === 'oscuro');
   const [toasts, setToasts] = useState([]);
   const [version, setVersion] = useState(0);
   const [errorInicial, setErrorInicial] = useState(null);
 
+  // La identidad visual es pública: la pantalla de inicio de sesión ya muestra el logo y los colores.
   useEffect(() => {
     let activo = true;
-    Promise.all([generalService.sucursales(), generalService.configuracion()])
-      .then(([sucs, conf]) => {
+    generalService
+      .configuracion()
+      .then((conf) => {
         if (!activo) return;
-        setSucursales(sucs);
         setConfig(conf);
         if (leer('origenes.modo', '') === '') setModoOscuro(conf.componentes.modoOscuro);
       })
@@ -64,14 +68,43 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  // Las sucursales se piden con la sesión abierta. Quien no es admin solo trabaja con la suya.
+  useEffect(() => {
+    setSucursalesListas(false);
+    if (!usuario) {
+      setSucursales([]);
+      return undefined;
+    }
+    let activo = true;
+    generalService
+      .sucursales()
+      .then((sucs) => {
+        if (!activo) return;
+        setSucursales(usuario.rol === 'admin' ? sucs : sucs.filter((s) => s.id === usuario.sucursalId));
+        setSucursalesListas(true);
+      })
+      // Un 401 ya lleva al login (AuthContext); cualquier otro error se muestra en el contenido.
+      .catch((err) => activo && err.status !== 401 && setErrorInicial(err));
+    return () => {
+      activo = false;
+    };
+  }, [usuario]);
+
   useEffect(() => {
     aplicarTema(config, modoOscuro);
   }, [config, modoOscuro]);
 
-  const setSucursalId = useCallback((id) => {
-    setSucursalIdState(id);
-    guardar('origenes.sucursal', id);
-  }, []);
+  const esAdmin = usuario?.rol === 'admin';
+  const sucursalId = esAdmin || !usuario?.sucursalId ? sucursalElegida : usuario.sucursalId;
+
+  const setSucursalId = useCallback(
+    (id) => {
+      if (!esAdmin) return;
+      setSucursalElegida(id);
+      guardar('origenes.sucursal', id);
+    },
+    [esAdmin],
+  );
 
   const toggleModo = useCallback(() => {
     setModoOscuro((m) => {
@@ -90,14 +123,16 @@ export function AppProvider({ children }) {
   const refrescar = useCallback(() => setVersion((v) => v + 1), []);
 
   const sucursal = sucursales.find((s) => s.id === sucursalId) ?? sucursales[0];
+  // Listo para mostrar los módulos: hay identidad visual y sucursales de la sesión.
+  const listo = Boolean(config) && sucursalesListas;
 
   const value = useMemo(
     () => ({
       sucursales, sucursal, sucursalId: sucursal?.id ?? sucursalId, setSucursalId,
-      config, setConfig, modoOscuro, toggleModo,
+      config, setConfig, modoOscuro, toggleModo, listo,
       toasts, notify, cerrarToast, version, refrescar, errorInicial,
     }),
-    [sucursales, sucursal, sucursalId, setSucursalId, config, modoOscuro, toggleModo, toasts, notify, cerrarToast, version, refrescar, errorInicial],
+    [sucursales, sucursal, sucursalId, setSucursalId, config, modoOscuro, toggleModo, listo, toasts, notify, cerrarToast, version, refrescar, errorInicial],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
