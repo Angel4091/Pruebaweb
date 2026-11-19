@@ -10,6 +10,4 @@ Thumbs.db
 .vscode/
 .idea/
 coverage/
-# Datos generados en tiempo de ejecución
-database/data.json
 .claude/
