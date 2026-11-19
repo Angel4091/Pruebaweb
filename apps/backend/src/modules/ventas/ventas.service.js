@@ -45,13 +45,15 @@ function normalizarItems(items, productos) {
   return [...agrupados.values()].map((it) => ({ ...it, total: round2(it.cantidad * it.precioUnitario) }));
 }
 
-/** Venta con datos de cliente, sucursal y caja para imprimir el comprobante. */
+/**
+ * Venta con datos de cliente, sucursal y caja para imprimir el comprobante.
+ * Las consultas van una tras otra: dentro de una transacción todas usan la misma
+ * conexión, y una conexión solo atiende una consulta a la vez.
+ */
 async function detalleVenta(venta, db = pool) {
-  const [cliente, sucursal, caja] = await Promise.all([
-    generalRepo.obtenerCliente(venta.clienteId, db),
-    generalRepo.obtenerSucursal(venta.sucursalId, db),
-    cajaRepo.obtenerCaja(venta.cajaId, db),
-  ]);
+  const cliente = await generalRepo.obtenerCliente(venta.clienteId, db);
+  const sucursal = await generalRepo.obtenerSucursal(venta.sucursalId, db);
+  const caja = await cajaRepo.obtenerCaja(venta.cajaId, db);
   return { ...venta, cliente, sucursal, caja };
 }
 
