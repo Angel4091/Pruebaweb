@@ -5,6 +5,16 @@ import { Topbar } from './Topbar.jsx';
 import { BandaGreca, EscenaEncabezado, OrnamentoTitulo } from '../decor/Decor.jsx';
 import { Modal, Toasts, ErrorBox, Cargando } from '../ui/index.jsx';
 import { useApp } from '../../context/AppContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+
+/** Pasos de un turno; cada rol ve los que le tocan. */
+const PASOS_DEL_TURNO = [
+  { ruta: '/caja', texto: 'Abre la caja con su fondo inicial en el módulo Caja.' },
+  { ruta: '/pos', texto: 'Toma los pedidos en el Punto de venta; cada venta descuenta los insumos de su receta.' },
+  { ruta: '/inventario', texto: 'Revisa en Inventario las alertas de stock de tu sucursal.' },
+  { ruta: '/compras', texto: 'Registra las compras de insumos y los gastos en Compras.' },
+  { ruta: '/caja', texto: 'Al terminar, cuenta el efectivo y cierra el turno para cuadrar la caja.' },
+];
 
 const PLACEHOLDERS = {
   '/pos': 'Buscar productos…',
@@ -17,7 +27,9 @@ export function Layout() {
   const [menu, setMenu] = useState(false);
   const [guia, setGuia] = useState(false);
   const { pathname } = useLocation();
-  const { toasts, cerrarToast, config, errorInicial } = useApp();
+  const { toasts, cerrarToast, listo, errorInicial } = useApp();
+  const { usuario, puedeVer } = useAuth();
+  const esAdmin = usuario?.rol === 'admin';
 
   return (
     <div className="flex min-h-screen">
@@ -28,7 +40,7 @@ export function Layout() {
           <EscenaEncabezado className="pointer-events-none absolute top-0 right-4 hidden h-28 w-[300px] md:block lg:right-10 lg:h-36 lg:w-[400px] xl:h-40 xl:w-[440px]" />
           {/* El contenido va sobre la ilustración del encabezado y con un ancho máximo cómodo de leer. */}
           <div className="relative z-[1] mx-auto w-full max-w-[1520px]">
-            {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : config ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
+            {errorInicial ? <ErrorBox error={errorInicial} onRetry={() => window.location.reload()} /> : listo ? <Outlet /> : <Cargando texto="Preparando el sistema…" />}
           </div>
         </main>
         <BandaGreca />
@@ -36,10 +48,12 @@ export function Layout() {
 
       <Modal abierto={guia} onClose={() => setGuia(false)} titulo="Guía rápida del sistema" ancho="max-w-2xl">
         <p className="mb-4 text-sm text-suave">
-          Orígenes SV centraliza la operación de todas las sucursales. Elige la sucursal en la barra superior; todos los módulos muestran los datos de esa sucursal.
+          {esAdmin
+            ? 'Orígenes SV centraliza la operación de todas las sucursales. Elige la sucursal en la barra superior; todos los módulos muestran los datos de esa sucursal.'
+            : 'Orígenes SV centraliza la operación del restaurante. Estos son los módulos de tu rol; todos muestran los datos de tu sucursal.'}
         </p>
         <ul className="grid gap-2 sm:grid-cols-2">
-          {MODULOS.map(({ ruta, nombre, icon: Icon, descripcion }) => (
+          {MODULOS.filter((m) => puedeVer(m.ruta)).map(({ ruta, nombre, icon: Icon, descripcion }) => (
             <li key={ruta}>
               <Link to={ruta} onClick={() => setGuia(false)} className="flex gap-3 rounded-xl border border-borde p-3 hover:bg-superficie-2">
                 <Icon className="mt-0.5 size-5 shrink-0 text-primario" />
@@ -53,10 +67,9 @@ export function Layout() {
         </ul>
         <h4 className="mt-5 mb-2 font-display font-semibold text-texto">Flujo de un turno</h4>
         <ol className="list-decimal space-y-1 pl-5 text-sm text-texto/85">
-          <li>Abre la caja con su fondo inicial en el módulo Caja.</li>
-          <li>Toma los pedidos en el Punto de venta; cada venta descuenta los insumos de su receta.</li>
-          <li>Revisa las alertas de stock y registra las compras de insumos.</li>
-          <li>Al terminar, cuenta el efectivo y cierra el turno para cuadrar la caja.</li>
+          {PASOS_DEL_TURNO.filter((p) => puedeVer(p.ruta)).map((p) => (
+            <li key={p.texto}>{p.texto}</li>
+          ))}
         </ol>
       </Modal>
       <Toasts toasts={toasts} onClose={cerrarToast} />
