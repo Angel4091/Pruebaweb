@@ -10,7 +10,10 @@
   "scripts": {
     "setup": "npm ci && npm ci --prefix apps/backend && npm ci --prefix apps/frontend",
     "dev": "concurrently -n api,web -c blue,yellow \"npm run dev --prefix apps/backend\" \"npm run dev --prefix apps/frontend\"",
-    "db:seed": "node database/seeds/seed.mjs --force",
+    "db:up": "docker compose --env-file apps/backend/.env up -d --wait",
+    "db:down": "docker compose --env-file apps/backend/.env down",
+    "db:init": "npm run db:init --prefix apps/backend",
+    "db:seed": "npm run db:seed --prefix apps/backend",
     "build": "npm run build --prefix apps/frontend",
     "start": "npm start --prefix apps/backend",
     "test": "npm test --prefix apps/backend"
