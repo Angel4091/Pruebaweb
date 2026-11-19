@@ -12,8 +12,8 @@ import { Button, Modal, Field, Cargando, ErrorBox, Vacio, Aviso } from '../compo
 import { FotoProducto } from '../components/decor/FoodArt.jsx';
 import { Logo } from '../components/decor/Decor.jsx';
 import { money, fecha, hora, ETIQUETA_METODO, ETIQUETA_ORDEN, ETIQUETA_COMPROBANTE } from '../utils/format.js';
+import { desglosarIva, sinIva } from '../utils/iva.js';
 
-const IVA = 0.13;
 const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 const ORDENES = [
@@ -59,9 +59,8 @@ export default function PuntoVenta() {
     return (productos.data ?? []).filter((p) => (!categoria || p.categoriaId === categoria) && (!q || p.nombre.toLowerCase().includes(q)));
   }, [productos.data, busqueda, categoria]);
 
-  const subtotal = r2(carrito.reduce((a, i) => a + i.precio * i.cantidad, 0));
-  const iva = r2(subtotal * IVA);
-  const total = r2(subtotal + iva);
+  // Los precios del menú ya incluyen el IVA (D-14): el total es la suma de la orden.
+  const { subtotal, iva, total } = desglosarIva(carrito.map((i) => r2(i.precio * i.cantidad)));
   const caja = cajas.data?.find((c) => c.id === cajaId);
 
   const agregar = (p) => {
@@ -256,8 +255,8 @@ export default function PuntoVenta() {
           {carrito.length === 0 && <Vacio icon={ShoppingCart} titulo="La orden está vacía">Toca un platillo para agregarlo.</Vacio>}
 
           <dl className="space-y-1 border-t border-borde px-5 py-3 text-sm">
-            <div className="flex justify-between"><dt>Subtotal</dt><dd>{money(subtotal)}</dd></div>
-            <div className="flex justify-between"><dt>IVA 13 %</dt><dd>{money(iva)}</dd></div>
+            <div className="flex justify-between"><dt>Valor sin IVA</dt><dd>{money(subtotal)}</dd></div>
+            <div className="flex justify-between"><dt>IVA 13 % (incluido)</dt><dd>{money(iva)}</dd></div>
           </dl>
           <div className="flex items-center justify-between bg-secundario px-5 py-3 font-display text-2xl font-bold text-primario">
             <span>Total</span>
@@ -511,6 +510,7 @@ function CobroModal({ abierto, onClose, total, metodo, comprobante, cliente, onC
 function TicketModal({ venta, onClose }) {
   const { config } = useApp();
   if (!venta) return null;
+  const esCCF = venta.tipoComprobante === 'CCF';
   return (
     <Modal
       abierto={Boolean(venta)}
@@ -538,6 +538,7 @@ function TicketModal({ venta, onClose }) {
           <p>
             {fecha(venta.fecha)} {hora(venta.fecha)} · {venta.caja?.nombre} · {ETIQUETA_ORDEN[venta.tipoOrden]}
           </p>
+          {venta.atendio && <p>Atendió: {venta.atendio}</p>}
         </div>
         {venta.tipoComprobante === 'CCF' && (
           <div className="mt-3 border-t border-dashed border-[#ccc] pt-2">
@@ -551,19 +552,27 @@ function TicketModal({ venta, onClose }) {
             {venta.items.map((i) => (
               <tr key={i.productoId}>
                 <td className="py-1">{i.cantidad} × {i.nombre}</td>
-                <td className="py-1 text-right">{money(i.total)}</td>
+                {/* En el crédito fiscal cada línea va sin IVA; en la factura, con el IVA incluido. */}
+                <td className="py-1 text-right">{money(esCCF ? sinIva(i.total) : i.total)}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <dl className="mt-2 space-y-0.5 border-t border-dashed border-[#ccc] pt-2">
-          <div className="flex justify-between"><dt>Sumas</dt><dd>{money(venta.subtotal)}</dd></div>
-          <div className="flex justify-between"><dt>IVA 13 %</dt><dd>{money(venta.iva)}</dd></div>
+          {esCCF ? (
+            <>
+              <div className="flex justify-between"><dt>Sumas (sin IVA)</dt><dd>{money(venta.subtotal)}</dd></div>
+              <div className="flex justify-between"><dt>IVA 13 %</dt><dd>{money(venta.iva)}</dd></div>
+            </>
+          ) : (
+            <div className="flex justify-between"><dt>Sumas</dt><dd>{money(venta.total)}</dd></div>
+          )}
           <div className="flex justify-between font-display text-base font-bold"><dt>Total</dt><dd>{money(venta.total)}</dd></div>
           <div className="flex justify-between"><dt>{ETIQUETA_METODO[venta.metodoPago]}</dt><dd>{money(venta.montoRecibido)}</dd></div>
           {venta.metodoPago === 'efectivo' && <div className="flex justify-between"><dt>Cambio</dt><dd>{money(venta.cambio)}</dd></div>}
           {venta.referenciaPago && <div className="flex justify-between"><dt>Referencia</dt><dd>{venta.referenciaPago}</dd></div>}
         </dl>
+        {!esCCF && <p className="mt-1 text-xs">Precios con IVA incluido (13 %): {money(venta.iva)}</p>}
         <p className="mt-3 text-center">¡Gracias por su visita!</p>
       </div>
     </Modal>
