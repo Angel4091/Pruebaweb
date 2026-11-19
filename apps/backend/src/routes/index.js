@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { autenticar } from '../middlewares/auth.js';
 import { limitarASuSucursal } from '../middlewares/roles.js';
+import { registrarCambios } from '../middlewares/bitacora.js';
+import bitacora from '../modules/bitacora/bitacora.routes.js';
 import auth from '../modules/auth/auth.routes.js';
 import general, { rutasPublicas } from '../modules/general/general.routes.js';
 import usuarios from '../modules/usuarios/usuarios.routes.js';
@@ -33,8 +35,9 @@ const router = Router();
 router.use(rutasPublicas);
 router.use(auth);
 
-router.use(autenticar, limitarASuSucursal);
-for (const modulo of [general, usuarios, tablero, ventas, productos, inventario, caja, compras, rrhh, pronostico]) {
+// Con sesión: cada cambio que termina bien queda en la bitácora (BE-032).
+router.use(autenticar, limitarASuSucursal, registrarCambios);
+for (const modulo of [general, usuarios, bitacora, tablero, ventas, productos, inventario, caja, compras, rrhh, pronostico]) {
   router.use(modulo);
 }
 
