@@ -1,7 +1,8 @@
+import { leerActivo } from '../../utils/filtros.js';
 import * as productos from './productos.service.js';
 
 export const listarProductos = async (req, res) =>
-  res.json(await productos.listarProductos({ ...req.query, incluirInactivos: req.query.incluirInactivos === 'true' }));
+  res.json(await productos.listarProductos({ ...req.query, activo: leerActivo(req.query.activo) }));
 export const obtenerProducto = async (req, res) => res.json(await productos.obtenerProducto(req.params.id, req.query.sucursalId));
 export const crearProducto = async (req, res) => res.status(201).json(await productos.crearProducto(req.body));
 export const actualizarProducto = async (req, res) => res.json(await productos.actualizarProducto(req.params.id, req.body));

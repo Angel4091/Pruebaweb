@@ -3,13 +3,20 @@ import { AppError, notFound } from '../../utils/AppError.js';
 import { round2, IVA_RATE } from '../../utils/money.js';
 import { newId } from '../../utils/ids.js';
 import { addDays, rangoDelMes } from '../../utils/dates.js';
+import { leerPaginacion, leerRangoFechas, paginado } from '../../utils/filtros.js';
 import { registrarEntrada, obtenerInsumo } from '../inventario/inventario.service.js';
 import { validarSucursal } from '../general/general.service.js';
 import * as repo from './compras.repository.js';
 
 /* ---------- Proveedores ---------- */
 
-export const listarProveedores = () => repo.listarProveedores();
+export const listarProveedores = ({ activo = true } = {}) => repo.listarProveedores({ activo });
+
+export async function obtenerProveedor(id) {
+  const prov = await repo.obtenerProveedor(id);
+  if (!prov) throw notFound('Proveedor');
+  return prov;
+}
 
 export async function crearProveedor(data) {
   const { nombre, nit = '', nrc = '', telefono = '', correo = '', contacto = '', diasCredito = 0 } = data;
@@ -24,10 +31,14 @@ export async function actualizarProveedor(id, data) {
   for (const key of ['nombre', 'nit', 'nrc', 'telefono', 'correo', 'contacto', 'diasCredito']) {
     if (data[key] !== undefined) prov[key] = key === 'diasCredito' ? Math.max(0, Number(data[key]) || 0) : data[key];
   }
+  if (data.activo !== undefined) prov.activo = Boolean(data.activo);
   prov.nombre = String(prov.nombre).trim();
   if (await repo.existeProveedorConNombre(prov.nombre, id)) throw new AppError('Ya existe un proveedor con ese nombre', 409);
   return repo.guardarProveedor(prov);
 }
+
+/** Baja lógica: el proveedor deja de aparecer al registrar compras; sus facturas y cuentas se conservan. */
+export const desactivarProveedor = (id) => actualizarProveedor(id, { activo: false });
 
 /* ---------- Compras (costos y gastos) ---------- */
 
@@ -45,7 +56,7 @@ const conEstado = (cxp) => (cxp ? { ...cxp, estado: estadoCuenta(cxp) } : null);
  * - tipo "gasto": servicios u otros gastos (luz, alquiler) → no afecta inventario.
  * Si la condición es "credito", se crea una cuenta por pagar.
  */
-export async function crearCompra(data) {
+export async function crearCompra(data, usuario = null) {
   const {
     numeroFactura, proveedorId = null, proveedorNombre = '', sucursalId, tipo = 'costo', condicion = 'contado', descripcion = '', items = [], monto, ordenCompraId = null,
   } = data;
@@ -60,6 +71,7 @@ export async function crearCompra(data) {
     }
     const proveedor = proveedorId ? await repo.obtenerProveedor(proveedorId, client) : null;
     if (proveedorId && !proveedor) throw notFound('Proveedor');
+    if (proveedor && !proveedor.activo) throw new AppError(`El proveedor ${proveedor.nombre} está desactivado`, 422);
     if (tipo === 'costo' && !proveedor) throw new AppError('Las compras de insumos requieren un proveedor', 422);
 
     let lineas = [];
@@ -98,6 +110,7 @@ export async function crearCompra(data) {
       total: round2(subtotal + iva),
       condicion,
       ordenCompraId: orden?.id ?? null,
+      creadoPor: usuario?.id ?? null, // D-19: quién registró la factura
     };
     await repo.insertarCompra(compra, client);
 
@@ -133,7 +146,13 @@ export async function crearCompra(data) {
   });
 }
 
-export const listarCompras = ({ sucursalId, tipo } = {}) => repo.listarCompras({ sucursalId, tipo });
+/** Historial de compras paginado en el servidor. Filtros: sucursal, tipo, proveedor y rango de fechas. */
+export async function listarCompras({ sucursalId, tipo, proveedorId, desde, hasta, pagina, porPagina } = {}) {
+  if (tipo && !['costo', 'gasto'].includes(tipo)) throw new AppError('tipo debe ser costo o gasto', 400);
+  const paginacion = leerPaginacion({ pagina, porPagina });
+  const { filas, total } = await repo.listarCompras({ sucursalId, tipo, proveedorId, ...leerRangoFechas({ desde, hasta }) }, paginacion);
+  return paginado(filas, total, paginacion);
+}
 
 export async function listarCuentasPorPagar({ estado, sucursalId } = {}) {
   const cuentas = (await repo.listarCuentas(sucursalId)).map(conEstado);

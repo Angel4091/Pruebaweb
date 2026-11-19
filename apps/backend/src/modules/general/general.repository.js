@@ -13,16 +13,26 @@ export async function obtenerSucursal(id, db = pool) {
 
 /* ---------- Clientes ---------- */
 
-const COLUMNAS_CLIENTE = 'id, nombre, tipo, nit, nrc, giro, direccion, telefono';
+const COLUMNAS_CLIENTE = 'id, nombre, tipo, nit, nrc, giro, direccion, telefono, activo';
 
-export async function listarClientes(texto, db = pool) {
+/** Clientes que coinciden con el texto (nombre, NIT o NRC). activo: true (por defecto), false o null (todos). */
+export async function listarClientes({ texto, activo = true } = {}, db = pool) {
   const sql = `
     select ${COLUMNAS_CLIENTE}
     from clientes
-    where activo
+    where ($2::boolean is null or activo = $2)
       and ($1::text is null or strpos(lower(nombre), $1) > 0 or strpos(nit, $1) > 0 or strpos(nrc, $1) > 0)
     order by orden`;
-  return todas(await db.query(sql, [texto || null]));
+  return todas(await db.query(sql, [texto || null, activo]));
+}
+
+export async function guardarCliente(c, db = pool) {
+  const sql = `
+    update clientes
+    set nombre = $2, tipo = $3, nit = $4, nrc = $5, giro = $6, direccion = $7, telefono = $8, activo = $9
+    where id = $1
+    returning ${COLUMNAS_CLIENTE}`;
+  return unaFila(await db.query(sql, [c.id, c.nombre, c.tipo, c.nit, c.nrc, c.giro, c.direccion, c.telefono, c.activo]));
 }
 
 export async function obtenerCliente(id, db = pool) {

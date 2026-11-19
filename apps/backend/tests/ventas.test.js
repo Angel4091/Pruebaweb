@@ -22,9 +22,12 @@ async function ultimoCorrelativo(tipo = 'FCF') {
   return rows[0].ultimo;
 }
 
-test('calcula IVA del 13 % sobre el subtotal', () => {
+test('los precios incluyen el IVA: se desglosa el 13 % sin cambiar el total (D-14)', () => {
+  // 3 pupusas de $1.50 y una horchata de $2.00: el cliente paga $6.50.
   const t = ventas.calcularTotales([{ cantidad: 3, precioUnitario: 1.5 }, { cantidad: 1, precioUnitario: 2 }]);
-  assert.deepEqual(t, { subtotal: 6.5, iva: 0.85, total: 7.35 });
+  assert.deepEqual(t, { subtotal: 5.75, iva: 0.75, total: 6.5 });
+  // Un café de $3.50 se cobra $3.50: $3.10 sin IVA y $0.40 de IVA.
+  assert.deepEqual(ventas.calcularTotales([{ cantidad: 1, precioUnitario: 3.5 }]), { subtotal: 3.1, iva: 0.4, total: 3.5 });
 });
 
 test('vender un Latte grande descuenta su receta del inventario', { skip }, async () => {

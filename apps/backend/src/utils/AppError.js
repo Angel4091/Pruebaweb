@@ -9,3 +9,7 @@ export class AppError extends Error {
 }
 
 export const notFound = (entity) => new AppError(`${entity} no encontrado`, 404);
+
+/** 409 cuando otra persona guardó cambios en el registro después de que se abrió (D-19). */
+export const registroDesactualizado = (entity) =>
+  new AppError(`Alguien más modificó este ${entity} mientras lo editabas. Vuelve a abrirlo para ver los datos actuales.`, 409);

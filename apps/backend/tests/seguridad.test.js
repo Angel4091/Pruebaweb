@@ -137,7 +137,7 @@ describe('cada quien en su sucursal', () => {
   });
 
   test('el gerente solo ve compras y empleados de su sucursal', { skip }, async () => {
-    const compras = (await pedir('/compras', { token: t.gerente })).body;
+    const compras = (await pedir('/compras?porPagina=100', { token: t.gerente })).body.datos;
     const empleados = (await pedir('/empleados', { token: t.gerente })).body;
     assert.ok(empleados.length > 0);
     assert.ok([...compras, ...empleados].every((x) => x.sucursalId === 'suc-sanmiguel'));

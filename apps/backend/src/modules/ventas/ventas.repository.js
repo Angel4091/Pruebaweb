@@ -1,11 +1,12 @@
 import { pool, insertarFilas } from '../../config/database.js';
 import { unaFila, todas } from '../../utils/filas.js';
 
-// Cada venta trae sus líneas como arreglo "items".
+// Cada venta trae sus líneas como arreglo "items" y el nombre de quien la cobró ("atendio").
 const SELECT_VENTA = `
   select v.id, v.numero, v.tipo_comprobante, v.sucursal_id, v.caja_id, v.turno_id, v.fecha, v.tipo_orden,
          v.cliente_id, v.metodo_pago, v.referencia_pago, v.subtotal, v.iva, v.total, v.monto_recibido,
-         v.cambio, v.estado, v.motivo_anulacion, v.version,
+         v.cambio, v.estado, v.motivo_anulacion, v.creado_por, v.version,
+         (select u.nombre from usuarios u where u.id = v.creado_por) as atendio,
          coalesce((select json_agg(json_build_object(
                     'producto_id', d.producto_id, 'nombre', d.nombre, 'cantidad', d.cantidad,
                     'precio_unitario', d.precio_unitario, 'total', d.total) order by d.id)
@@ -55,14 +56,24 @@ export async function anularVenta(id, motivo, db) {
   );
 }
 
-/** Ventas filtradas, de la más reciente a la más antigua. */
-export async function listarVentas({ sucursalId, desde, hasta, tipoComprobante, limite }, db = pool) {
-  const sql = `${SELECT_VENTA}
-    where ($1::text is null or v.sucursal_id = $1)
-      and ($2::timestamptz is null or v.fecha >= $2)
-      and ($3::timestamptz is null or v.fecha < $3)
-      and ($4::text is null or v.tipo_comprobante = $4)
-    order by v.fecha desc, v.numero desc
-    limit $5`;
-  return todas(await db.query(sql, [sucursalId || null, desde ?? null, hasta ?? null, tipoComprobante || null, limite]));
+// Filtros del listado de ventas; un parámetro nulo no filtra.
+const FILTRO_VENTAS = `
+  where ($1::text is null or v.sucursal_id = $1)
+    and ($2::timestamptz is null or v.fecha >= $2)
+    and ($3::timestamptz is null or v.fecha < $3)
+    and ($4::text is null or v.tipo_comprobante = $4)
+    and ($5::text is null or v.estado = $5)`;
+
+/**
+ * Una página de ventas, de la más reciente a la más antigua, y el total que cumple los filtros
+ * (dos consultas con los mismos filtros: la cuenta y la página).
+ */
+export async function listarVentas({ sucursalId, desde, hasta, tipoComprobante, estado }, { limite, desplazamiento }, db = pool) {
+  const filtros = [sucursalId || null, desde ?? null, hasta ?? null, tipoComprobante || null, estado || null];
+  const conteo = await db.query(`select count(*) as total from ventas v ${FILTRO_VENTAS}`, filtros);
+  const pagina = await db.query(
+    `${SELECT_VENTA} ${FILTRO_VENTAS} order by v.fecha desc, v.numero desc limit $6 offset $7`,
+    [...filtros, limite, desplazamiento],
+  );
+  return { filas: todas(pagina), total: conteo.rows[0].total };
 }

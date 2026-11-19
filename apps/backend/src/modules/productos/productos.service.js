@@ -1,6 +1,6 @@
 import { withTransaction } from '../../config/database.js';
-import { AppError, notFound } from '../../utils/AppError.js';
-import { round2 } from '../../utils/money.js';
+import { AppError, notFound, registroDesactualizado } from '../../utils/AppError.js';
+import { round2, sinIva } from '../../utils/money.js';
 import { newId } from '../../utils/ids.js';
 import { costoProducto } from '../inventario/inventario.service.js';
 import { validarSucursal } from '../general/general.service.js';
@@ -31,14 +31,20 @@ function unidadesDisponibles(producto, insumos, sucursalId) {
   return Math.max(0, Math.min(...porInsumo));
 }
 
-/** Agrega datos calculados: costo, margen, receta detallada y disponibilidad. */
+/**
+ * Agrega datos calculados: costo, margen, receta detallada y disponibilidad.
+ * El precio incluye IVA (D-14); el margen se calcula sobre el precio sin IVA,
+ * porque el 13 % se le entrega a Hacienda y no es ingreso del restaurante.
+ */
 function enriquecerProducto(fila, insumos, sucursalId) {
   const producto = limpiar(fila);
   const costo = costoProducto(fila, insumos);
+  const precioSinIva = sinIva(producto.precio);
   return {
     ...producto,
+    precioSinIva,
     costo,
-    margen: producto.precio > 0 ? round2(((producto.precio - costo) / producto.precio) * 100) : 0,
+    margen: precioSinIva > 0 ? round2(((precioSinIva - costo) / precioSinIva) * 100) : 0,
     receta: producto.receta.map((r) => {
       const ins = insumos.get(r.insumoId);
       return { ...r, nombre: ins?.nombre ?? r.insumoId, unidad: ins?.unidad, costo: round2((ins?.costoUnitario ?? 0) * r.cantidad) };
@@ -47,10 +53,10 @@ function enriquecerProducto(fila, insumos, sucursalId) {
   };
 }
 
-export async function listarProductos({ sucursalId, categoriaId, q, incluirInactivos = false } = {}) {
+export async function listarProductos({ sucursalId, categoriaId, q, activo = true } = {}) {
   if (sucursalId) await validarSucursal(sucursalId);
   const [filas, insumos] = await Promise.all([
-    repo.listarProductos({ categoriaId, texto: q?.toLowerCase().trim(), incluirInactivos }),
+    repo.listarProductos({ categoriaId, texto: q?.toLowerCase().trim(), activo }),
     mapaInsumos(sucursalId),
   ]);
   return filas.map((p) => enriquecerProducto(p, insumos, sucursalId));
@@ -132,7 +138,9 @@ export async function actualizarProducto(id, data) {
     if (data.activo !== undefined) prod.activo = Boolean(data.activo);
     if (data.costo !== undefined && prod.tipo === 'reventa') prod.costo = round2(data.costo);
     if (data.stockMinimo !== undefined && prod.tipo === 'reventa') prod.stockMinimo = Number(data.stockMinimo);
-    await repo.guardarProducto(prod, client);
+    // Si el cliente manda la versión que tenía en pantalla, se compara contra esa (D-19).
+    const versionLeida = data.version !== undefined ? Number(data.version) : prod.version;
+    if (!(await repo.guardarProducto(prod, versionLeida, client))) throw registroDesactualizado('producto');
     if (data.receta !== undefined && prod.tipo === 'elaborado') {
       await repo.reemplazarReceta(id, await validarReceta(data.receta, client), client);
     }
