@@ -14,6 +14,7 @@ const Caja = lazy(() => import('../pages/Caja.jsx'));
 const Personal = lazy(() => import('../pages/Personal.jsx'));
 const Pronostico = lazy(() => import('../pages/Pronostico.jsx'));
 const IdentidadVisual = lazy(() => import('../pages/IdentidadVisual.jsx'));
+const Administracion = lazy(() => import('../pages/Administracion.jsx'));
 const SinAcceso = lazy(() => import('../pages/SinAcceso.jsx'));
 const NoEncontrado = lazy(() => import('../pages/NoEncontrado.jsx'));
 
@@ -26,6 +27,7 @@ const PAGINAS = [
   ['personal', Personal],
   ['pronostico', Pronostico],
   ['identidad', IdentidadVisual],
+  ['administracion', Administracion],
 ];
 
 const PantallaCompleta = ({ texto }) => (
