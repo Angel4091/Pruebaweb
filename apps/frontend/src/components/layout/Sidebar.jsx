@@ -1,8 +1,12 @@
 import { NavLink } from 'react-router-dom';
 import { House, ShoppingCart, Package, Truck, Calculator, Users, TrendingUp, Palette, X } from 'lucide-react';
 import { Logo, BordeEscalonado } from '../decor/Decor.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
-/** Módulos del sistema; se reutiliza en la guía y en los accesos rápidos. */
+/**
+ * Módulos del sistema; se reutiliza en la guía. Cada rol ve solo los suyos (utils/permisos.js).
+ * `etiqueta` es el texto del menú cuando el nombre no cabe en una línea.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export const MODULOS = [
   { ruta: '/', nombre: 'Inicio', icon: House, descripcion: 'Resumen de ventas, cajas y alertas del día.' },
@@ -20,6 +24,7 @@ export const MODULOS = [
  * se compacta (logo, íconos y espacios menores) para que todo quepa sin scroll.
  */
 export function Sidebar({ abierto, onClose }) {
+  const { puedeVer } = useAuth();
   return (
     <>
       {abierto && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} aria-hidden="true" />}
@@ -34,7 +39,7 @@ export function Sidebar({ abierto, onClose }) {
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 pb-4 [@media(max-height:760px)]:gap-0.5 [@media(max-height:760px)]:pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Módulos">
-          {MODULOS.map(({ ruta, nombre, icon: Icon }) => (
+          {MODULOS.filter((m) => puedeVer(m.ruta)).map(({ ruta, nombre, etiqueta, icon: Icon }) => (
             <NavLink
               key={ruta}
               to={ruta}
@@ -47,7 +52,7 @@ export function Sidebar({ abierto, onClose }) {
               }
             >
               <Icon className="size-6 [@media(max-height:760px)]:size-5" strokeWidth={1.9} />
-              <span>{nombre}</span>
+              <span>{etiqueta ?? nombre}</span>
             </NavLink>
           ))}
         </nav>

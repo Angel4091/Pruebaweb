@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Store, Search, CalendarDays, Bell, Sun, Moon, BookOpen, Pencil, ChevronDown, Menu, Package, HandCoins } from 'lucide-react';
+import { Store, Search, CalendarDays, Bell, Sun, Moon, BookOpen, Pencil, ChevronDown, Menu, Package, HandCoins, LogOut } from 'lucide-react';
 import { useApp } from '../../context/AppContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { NOMBRE_ROL } from '../../utils/permisos.js';
 import { generalService } from '../../services/index.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import { Logo, DivisorRombos } from '../decor/Decor.jsx';
@@ -22,8 +24,9 @@ const pill = 'flex h-11 items-center gap-2 whitespace-nowrap rounded-full border
 
 export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…' }) {
   const { sucursales, sucursal, setSucursalId, config, modoOscuro, toggleModo, version } = useApp();
+  const { usuario, puede, puedeVer, cerrarSesion } = useAuth();
   const navigate = useNavigate();
-  const [menu, setMenu] = useState(null); // 'sucursal' | 'notif' | 'buscar' | null
+  const [menu, setMenu] = useState(null); // 'sucursal' | 'notif' | 'buscar' | 'usuario' | null
   const [q, setQ] = useState('');
   const [resultados, setResultados] = useState([]);
   const [notificaciones, setNotificaciones] = useState([]);
@@ -33,6 +36,9 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
   const refSuc = useClickFuera(() => menu === 'sucursal' && cerrar());
   const refNotif = useClickFuera(() => menu === 'notif' && cerrar());
   const refBuscar = useClickFuera(() => menu === 'buscar' && cerrar());
+  const refUsuario = useClickFuera(() => menu === 'usuario' && cerrar());
+  const cambiaSucursal = puede('cambiarSucursal');
+  const editaIdentidad = puedeVer('/identidad');
 
   useEffect(() => {
     const t = setInterval(() => setAhora(new Date()), 60_000);
@@ -59,6 +65,15 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
     };
   }, [qDebounced]);
 
+  // Al cerrar sesión se vuelve al login sin recordar la pantalla: el siguiente turno puede ser de otro rol.
+  // Ambos cambios van en la misma transición para que la pantalla protegida no alcance a redirigir.
+  const salir = () => {
+    startTransition(() => {
+      navigate('/login', { replace: true });
+      cerrarSesion();
+    });
+  };
+
   const ir = (ruta) => {
     navigate(ruta);
     setQ('');
@@ -72,25 +87,29 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           <Menu className="size-6" />
         </button>
         {/* El nombre del restaurante nunca se recorta: si falta espacio, se compactan los demás controles. */}
-        <Link to="/identidad" className="group flex shrink-0 items-center gap-3 pr-1" title="Editar identidad visual">
+        <MarcaEnlace editable={editaIdentidad}>
           {/* En celular se oculta la figura del logo para dejar espacio al nombre (el menú lateral ya la muestra). */}
           <span className="hidden sm:flex">
             <Logo variante="figura" className="w-12 text-[var(--c-tinta)]" />
           </span>
           <span className="hidden h-9 w-px bg-borde sm:block" />
           <span className="font-display text-base font-bold tracking-wide whitespace-nowrap text-texto uppercase sm:text-xl">{config?.nombre ?? 'Orígenes SV'}</span>
-          <Pencil className="hidden size-4 text-suave group-hover:text-primario xl:block" />
-        </Link>
+          {editaIdentidad && <Pencil className="hidden size-4 text-suave group-hover:text-primario xl:block" />}
+        </MarcaEnlace>
 
         <div ref={refSuc} className="relative ml-auto hidden shrink-0 md:block xl:ml-4">
-          <button type="button" className={pill} onClick={() => setMenu(menu === 'sucursal' ? null : 'sucursal')} aria-haspopup="listbox" aria-expanded={menu === 'sucursal'} title={sucursal?.nombre}>
-            <Store className="size-5 text-primario" />
-            {/* En pantallas medianas se muestra solo "Central" / "San Miguel". */}
-            <span className="xl:hidden">{sucursal?.nombre?.replace(/^Sucursal\s+/i, '') ?? 'Sucursal'}</span>
-            <span className="hidden xl:inline">{sucursal?.nombre ?? 'Sucursal'}</span>
-            <ChevronDown className="size-4" />
-          </button>
-          {menu === 'sucursal' && (
+          {cambiaSucursal ? (
+            <button type="button" className={pill} onClick={() => setMenu(menu === 'sucursal' ? null : 'sucursal')} aria-haspopup="listbox" aria-expanded={menu === 'sucursal'} title={sucursal?.nombre}>
+              <NombreSucursal sucursal={sucursal} />
+              <ChevronDown className="size-4" />
+            </button>
+          ) : (
+            // Los demás roles trabajan solo con su sucursal: se muestra sin lista para cambiarla.
+            <div className={pill} title={`Tu sucursal: ${sucursal?.nombre ?? ''}`}>
+              <NombreSucursal sucursal={sucursal} />
+            </div>
+          )}
+          {cambiaSucursal && menu === 'sucursal' && (
             <ul className="card absolute top-12 left-0 z-30 w-64 p-1.5" role="listbox">
               {sucursales.map((s) => (
                 <li key={s.id}>
@@ -199,12 +218,59 @@ export function Topbar({ onMenu, onGuia, placeholder = 'Buscar en el sistema…'
           <span className="hidden xl:inline">Guía</span>
         </button>
 
-        <div className="relative grid size-11 shrink-0 place-items-center rounded-full bg-primario font-display font-bold text-white" title="Andrea Morales · Gerente general">
-          {iniciales('Andrea Morales')}
-          <span className="absolute right-0 bottom-0 size-3 rounded-full bg-exito ring-2 ring-fondo" />
+        <div ref={refUsuario} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMenu(menu === 'usuario' ? null : 'usuario')}
+            className="relative grid size-11 place-items-center rounded-full bg-primario font-display font-bold text-white hover:brightness-110"
+            title={`${usuario?.nombre ?? ''} · ${NOMBRE_ROL[usuario?.rol] ?? ''}`}
+            aria-haspopup="menu"
+            aria-expanded={menu === 'usuario'}
+            aria-label="Mi sesión"
+          >
+            {iniciales(usuario?.nombre ?? '')}
+            <span className="absolute right-0 bottom-0 size-3 rounded-full bg-exito ring-2 ring-fondo" />
+          </button>
+          {menu === 'usuario' && (
+            <div className="card absolute top-12 right-0 z-30 w-[min(280px,90vw)] overflow-hidden" role="menu">
+              <div className="border-b border-borde px-4 py-3">
+                <p className="font-display font-semibold text-texto">{usuario?.nombre}</p>
+                <p className="truncate text-xs text-suave">{usuario?.email}</p>
+                <p className="mt-1.5 text-xs text-texto/80">
+                  {NOMBRE_ROL[usuario?.rol]} · {usuario?.sucursalNombre ?? 'Todas las sucursales'}
+                </p>
+              </div>
+              <button type="button" role="menuitem" onClick={salir} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-texto hover:bg-superficie-2">
+                <LogOut className="size-5 text-primario" />
+                Cerrar sesión
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <DivisorRombos className="px-4 sm:px-6 lg:px-8" />
     </header>
+  );
+}
+
+/** Nombre de la sucursal; en pantallas medianas solo "Central" / "San Miguel". */
+function NombreSucursal({ sucursal }) {
+  return (
+    <>
+      <Store className="size-5 text-primario" />
+      <span className="xl:hidden">{sucursal?.nombre?.replace(/^Sucursal\s+/i, '') ?? 'Sucursal'}</span>
+      <span className="hidden xl:inline">{sucursal?.nombre ?? 'Sucursal'}</span>
+    </>
+  );
+}
+
+/** Logo y nombre: enlace a Identidad Visual para el admin; para los demás roles, solo la marca. */
+function MarcaEnlace({ editable, children }) {
+  const clase = 'group flex shrink-0 items-center gap-3 pr-1';
+  if (!editable) return <div className={clase}>{children}</div>;
+  return (
+    <Link to="/identidad" className={clase} title="Editar identidad visual">
+      {children}
+    </Link>
   );
 }

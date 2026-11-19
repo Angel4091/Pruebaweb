@@ -4,6 +4,7 @@ import {
   Utensils, ShoppingBag, Bike, Search, ShoppingCart, Trash2, Minus, Plus, X, User, Banknote, CreditCard, Bitcoin, Receipt, Printer, Lock,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { productosService, clientesService, ventasService, cajaService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
@@ -28,6 +29,7 @@ const METODOS = [
 
 export default function PuntoVenta() {
   const { sucursalId, sucursal, notify, refrescar } = useApp();
+  const abreCaja = useAuth().puedeVer('/caja');
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState('');
   const [carrito, setCarrito] = useState([]);
@@ -142,12 +144,16 @@ export default function PuntoVenta() {
           className="mb-6"
           titulo={`${caja.nombre} está cerrada`}
           accion={
-            <Link to="/caja" className="rounded-xl bg-primario px-4 py-2 font-display text-sm font-semibold text-white">
-              Abrir caja
-            </Link>
+            abreCaja && (
+              <Link to="/caja" className="rounded-xl bg-primario px-4 py-2 font-display text-sm font-semibold text-white">
+                Abrir caja
+              </Link>
+            )
           }
         >
-          Abre la caja en el módulo Caja para poder cobrar en {sucursal?.nombre}.
+          {abreCaja
+            ? `Abre la caja en el módulo Caja para poder cobrar en ${sucursal?.nombre}.`
+            : `Pide a un cajero o al gerente que abra la caja para poder cobrar en ${sucursal?.nombre}.`}
         </Aviso>
       )}
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box, TriangleAlert, CircleCheck, ChartColumn, Package, Filter, Eye, Pencil, ChefHat, Utensils, Calculator, TrendingUp, Plus, FileText, Search, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { inventarioService, productosService, comprasService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
@@ -17,6 +18,8 @@ const POR_PAGINA = 7;
 
 export default function Inventario() {
   const { sucursalId, notify, refrescar, version } = useApp();
+  // Cajeros y baristas consultan existencias y recetas; solo admin y gerente las modifican.
+  const editar = useAuth().puede('editarInventario');
   const [vista, setVista] = useState('insumos');
   const [filtro, setFiltro] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -62,9 +65,11 @@ export default function Inventario() {
         <Button variante="contorno" icon={FileText} onClick={() => setModal({ tipo: 'recetas' })}>
           Ver recetas
         </Button>
-        <Button icon={Plus} onClick={() => setModal({ tipo: 'entrada' })}>
-          Registrar entrada
-        </Button>
+        {editar && (
+          <Button icon={Plus} onClick={() => setModal({ tipo: 'entrada' })}>
+            Registrar entrada
+          </Button>
+        )}
       </PageHeader>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -105,7 +110,7 @@ export default function Inventario() {
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-suave" />
               <input className="campo py-1.5 pl-8" placeholder="Buscar…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar en el listado" />
             </div>
-            {vista === 'insumos' && (
+            {vista === 'insumos' && editar && (
               <Button variante="suave" icon={Plus} className="py-1.5" onClick={() => setModal({ tipo: 'nuevo' })}>
                 Nuevo insumo
               </Button>
@@ -147,14 +152,16 @@ export default function Inventario() {
                               <Eye className="size-5" />
                             </button>
                           )}
-                          <button
-                            type="button"
-                            className="rounded-lg p-1.5 hover:bg-superficie-2"
-                            onClick={() => setModal({ tipo: i.esReventa ? 'entrada' : 'editar', item: i })}
-                            aria-label={i.esReventa ? `Registrar entrada de ${i.nombre}` : `Editar ${i.nombre}`}
-                          >
-                            {i.esReventa ? <Plus className="size-5" /> : <Pencil className="size-5" />}
-                          </button>
+                          {editar && (
+                            <button
+                              type="button"
+                              className="rounded-lg p-1.5 hover:bg-superficie-2"
+                              onClick={() => setModal({ tipo: i.esReventa ? 'entrada' : 'editar', item: i })}
+                              aria-label={i.esReventa ? `Registrar entrada de ${i.nombre}` : `Editar ${i.nombre}`}
+                            >
+                              {i.esReventa ? <Plus className="size-5" /> : <Pencil className="size-5" />}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -237,7 +244,7 @@ export default function Inventario() {
       <EntradaModal abierto={modal?.tipo === 'entrada'} item={modal?.item} insumos={insumos.data ?? []} productos={productos.data ?? []} sucursalId={sucursalId} onClose={() => setModal(null)} onGuardado={alGuardar} />
       <InsumoModal abierto={modal?.tipo === 'editar' || modal?.tipo === 'nuevo'} insumo={modal?.item} proveedores={proveedores.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} />
       <MovimientosModal abierto={modal?.tipo === 'ver'} insumo={modal?.item} sucursalId={sucursalId} onClose={() => setModal(null)} />
-      <RecetasModal abierto={modal?.tipo === 'recetas'} productos={productos.data ?? []} insumos={insumos.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} onVer={(id) => { setProductoReceta(id); setModal(null); }} />
+      <RecetasModal abierto={modal?.tipo === 'recetas'} editar={editar} productos={productos.data ?? []} insumos={insumos.data ?? []} onClose={() => setModal(null)} onGuardado={alGuardar} onVer={(id) => { setProductoReceta(id); setModal(null); }} />
     </>
   );
 }
@@ -429,7 +436,7 @@ function MovimientosModal({ abierto, insumo, sucursalId, onClose }) {
 }
 
 /** Lista de recetas y alta de un nuevo platillo con su receta. */
-function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer }) {
+function RecetasModal({ abierto, editar, productos, insumos, onClose, onGuardado, onVer }) {
   const { notify } = useApp();
   const { data: categorias } = useFetch(() => productosService.categorias(), []);
   const [creando, setCreando] = useState(false);
@@ -458,11 +465,13 @@ function RecetasModal({ abierto, productos, insumos, onClose, onGuardado, onVer 
     <Modal abierto={abierto} onClose={onClose} titulo={creando ? 'Nuevo platillo' : `Recetas del menú (${elaborados.length} platillos)`} ancho="max-w-3xl">
       {!creando ? (
         <>
-          <div className="mb-3 flex justify-end">
-            <Button icon={Plus} onClick={() => setCreando(true)}>
-              Nuevo platillo
-            </Button>
-          </div>
+          {editar && (
+            <div className="mb-3 flex justify-end">
+              <Button icon={Plus} onClick={() => setCreando(true)}>
+                Nuevo platillo
+              </Button>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="tabla min-w-[560px]">
               <thead>
