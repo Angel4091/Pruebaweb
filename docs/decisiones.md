@@ -215,3 +215,11 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
   - La lista de rutas vive solo en `endpoints.md`; `guia-tecnica/api-rest.md` queda con las convenciones, para no mantener la misma tabla en dos lugares.
 - **Pendiente del equipo:** exportar el seguimiento a Excel con los nombres reales de los integrantes (los lineamientos lo califican) y escribir el informe IEEE fuera del repositorio.
 - **Fase:** 7.
+
+## D-34 · Cada ticket queda a cargo de quien tiene ese rol
+- **Fuentes:** los roles que acordó el equipo (Diego Chávez, base de datos; Diego Guzmán, lógica de negocio; Ángel, API REST con Express; Rodrigo, rutas y diseño del frontend; Alexei, hooks y React; Luis, control de calidad; Rubén, documentación y pruebas; Yukio, product owner). El seguimiento tenía los tickets a nombre de "Integrante 1 a 8" con áreas supuestas.
+- **Decisión:**
+  - La columna `integrante` del CSV lleva el usuario de GitHub de quien tiene el rol que cubre el ticket. Esa persona debe poder explicarlo en la defensa ([guía de defensa](guia-defensa.md#2-qué-estudia-cada-integrante)).
+  - La columna nueva `commits_por` dice quién hizo los commits, para que el seguimiento no atribuya a nadie un trabajo que no subió. Los 31 tickets de las fases 0 a 7 los subió Angel4091 con apoyo de IA; según D-17, los tickets siguientes los sube cada responsable con su usuario.
+  - `seguimiento.xlsx` se genera desde el CSV, con las hojas Integrantes, Seguimiento y Resumen.
+- **Fase:** 7.

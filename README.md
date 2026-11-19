@@ -203,7 +203,7 @@ Formato de commits: `[gitmoji] [prefijo]: descripción` — por ejemplo `✨ fea
 - [Guía de defensa](docs/guia-defensa.md): qué estudia cada integrante y preguntas probables
 - [Uso de IA](docs/uso-de-ia.md)
 - Informe IEEE: `docs/investigacion-ieee/`
-- [Seguimiento de tickets por integrante](docs/seguimiento/seguimiento.csv)
+- Seguimiento de tickets por integrante: [CSV](docs/seguimiento/seguimiento.csv) y [Excel](docs/seguimiento/seguimiento.xlsx)
 - [Registro de decisiones](docs/decisiones.md)
 - [Lineamientos del proyecto](docs/lineamientos.pdf) y [material de clase](docs/clases/README.md)
 
