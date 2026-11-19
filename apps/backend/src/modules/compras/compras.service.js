@@ -135,9 +135,15 @@ export async function crearCompra(data) {
 
 export const listarCompras = ({ sucursalId, tipo } = {}) => repo.listarCompras({ sucursalId, tipo });
 
-export async function listarCuentasPorPagar({ estado } = {}) {
-  const cuentas = (await repo.listarCuentas()).map(conEstado);
+export async function listarCuentasPorPagar({ estado, sucursalId } = {}) {
+  const cuentas = (await repo.listarCuentas(sucursalId)).map(conEstado);
   return cuentas.filter((c) => !estado || c.estado === estado);
+}
+
+export async function sucursalDeCuenta(id) {
+  const sucursalId = await repo.sucursalDeCuenta(id);
+  if (sucursalId === undefined) throw notFound('Cuenta por pagar');
+  return sucursalId;
 }
 
 /** Abono o pago total de una cuenta por pagar. */
@@ -154,11 +160,11 @@ export async function pagarCuenta(id, { monto } = {}) {
   });
 }
 
-export async function resumenCompras() {
+export async function resumenCompras({ sucursalId } = {}) {
   const { desde, hasta } = rangoDelMes(new Date());
   const [totales, cuentas, proveedores] = await Promise.all([
-    repo.totalesPorTipo(desde, hasta),
-    listarCuentasPorPagar(),
+    repo.totalesPorTipo(desde, hasta, sucursalId),
+    listarCuentasPorPagar({ sucursalId }),
     repo.contarProveedores(),
   ]);
   return {
@@ -203,4 +209,4 @@ export async function crearOrdenesCompra({ sucursalId, pedidos } = {}) {
   });
 }
 
-export const listarOrdenesCompra = ({ estado } = {}) => repo.listarOrdenes(estado);
+export const listarOrdenesCompra = ({ estado, sucursalId } = {}) => repo.listarOrdenes(estado, sucursalId);

@@ -29,10 +29,10 @@ export async function siguienteCorrelativo(sucursalId, tipo, db) {
 export async function insertarVenta(v, db) {
   await db.query(
     `insert into ventas (id, numero, tipo_comprobante, sucursal_id, caja_id, turno_id, fecha, tipo_orden, cliente_id,
-                         metodo_pago, referencia_pago, subtotal, iva, total, monto_recibido, cambio, estado)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'emitida')`,
+                         metodo_pago, referencia_pago, subtotal, iva, total, monto_recibido, cambio, estado, creado_por)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'emitida', $17)`,
     [v.id, v.numero, v.tipoComprobante, v.sucursalId, v.cajaId, v.turnoId, v.fecha, v.tipoOrden, v.clienteId,
-      v.metodoPago, v.referenciaPago, v.subtotal, v.iva, v.total, v.montoRecibido, v.cambio],
+      v.metodoPago, v.referenciaPago, v.subtotal, v.iva, v.total, v.montoRecibido, v.cambio, v.creadoPor ?? null],
   );
   await insertarFilas(db, 'venta_detalles', ['venta_id', 'producto_id', 'nombre', 'cantidad', 'precio_unitario', 'total'],
     v.items.map((it) => [v.id, it.productoId, it.nombre, it.cantidad, it.precioUnitario, it.total]));

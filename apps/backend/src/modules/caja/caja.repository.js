@@ -62,10 +62,10 @@ export async function totalesTurno(turnoId, db = pool) {
 
 export async function insertarTurno(t, db = pool) {
   await db.query(
-    `insert into turnos (id, caja_id, sucursal_id, fecha, turno, responsable, monto_inicial, denominaciones, apertura, estado)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'abierta')`,
+    `insert into turnos (id, caja_id, sucursal_id, fecha, turno, responsable, monto_inicial, denominaciones, apertura, estado, abierto_por)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'abierta', $10)`,
     [t.id, t.cajaId, t.sucursalId, t.fecha, t.turno, t.responsable, t.montoInicial,
-      t.denominaciones ? JSON.stringify(t.denominaciones) : null, t.apertura],
+      t.denominaciones ? JSON.stringify(t.denominaciones) : null, t.apertura, t.abiertoPor ?? null],
   );
   return obtenerTurno(t.id, db);
 }
@@ -74,9 +74,11 @@ export async function cerrarTurno(id, c, db) {
   await db.query(
     `update turnos
      set estado = 'cerrada', cierre = now(), efectivo_contado = $2, total_ventas = $3, total_efectivo = $4,
-         total_tarjeta = $5, total_bitcoin = $6, ordenes = $7, efectivo_esperado = $8, diferencia = $9, observaciones = $10
+         total_tarjeta = $5, total_bitcoin = $6, ordenes = $7, efectivo_esperado = $8, diferencia = $9, observaciones = $10,
+         cerrado_por = $11
      where id = $1`,
-    [id, c.efectivoContado, c.ventas, c.efectivo, c.tarjeta, c.bitcoin, c.ordenes, c.efectivoEsperado, c.diferencia, c.observaciones],
+    [id, c.efectivoContado, c.ventas, c.efectivo, c.tarjeta, c.bitcoin, c.ordenes, c.efectivoEsperado, c.diferencia, c.observaciones,
+      c.cerradoPor ?? null],
   );
   return obtenerTurno(id, db);
 }

@@ -49,12 +49,13 @@ export async function buscarInsumos(texto, db = pool) {
   return todas(await db.query(sql, [texto, LIMITE_BUSQUEDA]));
 }
 
-export async function buscarEmpleados(texto, db = pool) {
+export async function buscarEmpleados(texto, sucursalId, db = pool) {
   const sql = `
     select id, nombre, cargo from empleados
-    where strpos(lower(nombre), $1) > 0 or strpos(lower(cargo), $1) > 0
+    where (strpos(lower(nombre), $1) > 0 or strpos(lower(cargo), $1) > 0)
+      and ($3::text is null or sucursal_id = $3)
     order by orden limit $2`;
-  return todas(await db.query(sql, [texto, LIMITE_BUSQUEDA]));
+  return todas(await db.query(sql, [texto, LIMITE_BUSQUEDA, sucursalId ?? null]));
 }
 
 export async function buscarProveedores(texto, db = pool) {
@@ -62,7 +63,10 @@ export async function buscarProveedores(texto, db = pool) {
   return todas(await db.query(sql, [texto, LIMITE_BUSQUEDA]));
 }
 
-export async function buscarComprobantes(texto, db = pool) {
-  const sql = 'select id, numero from ventas where strpos(lower(numero), $1) > 0 order by fecha desc limit 5';
-  return todas(await db.query(sql, [texto]));
+export async function buscarComprobantes(texto, sucursalId, db = pool) {
+  const sql = `
+    select id, numero from ventas
+    where strpos(lower(numero), $1) > 0 and ($2::text is null or sucursal_id = $2)
+    order by fecha desc limit 5`;
+  return todas(await db.query(sql, [texto, sucursalId ?? null]));
 }

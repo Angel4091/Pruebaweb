@@ -1,6 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { prepararBase, cerrarPool, MOTIVO_SIN_BASE } from './helpers/base-de-pruebas.js';
+import { prepararBase, cerrarPool, clienteApi, tokenDe, MOTIVO_SIN_BASE } from './helpers/base-de-pruebas.js';
 
 const disponible = await prepararBase();
 const skip = disponible ? false : MOTIVO_SIN_BASE;
@@ -8,11 +8,16 @@ const { createApp } = await import('../src/app.js');
 
 let servidor;
 let base;
+let token;
+const llamar = clienteApi(() => base);
+// Estas pruebas recorren la API como admin; los permisos por rol están en seguridad.test.js.
+const pedir = (ruta, opciones = {}) => llamar(ruta, { token, ...opciones });
 
 before(async () => {
   servidor = createApp().listen(0);
   await new Promise((resolve) => servidor.once('listening', resolve));
   base = `http://127.0.0.1:${servidor.address().port}/api`;
+  if (disponible) token = await tokenDe(llamar, 'admin');
 });
 
 after(async () => {
@@ -20,16 +25,8 @@ after(async () => {
   await cerrarPool();
 });
 
-const pedir = async (ruta, opciones = {}) => {
-  const res = await fetch(`${base}${ruta}`, {
-    ...opciones,
-    headers: { 'content-type': 'application/json', ...opciones.headers },
-  });
-  return { status: res.status, body: await res.json() };
-};
-
 test('GET /salud confirma la conexión con PostgreSQL', { skip }, async () => {
-  const { status, body } = await pedir('/salud');
+  const { status, body } = await llamar('/salud');
   assert.equal(status, 200);
   assert.equal(body.baseDeDatos, 'ok');
 });
@@ -46,7 +43,7 @@ test('GET /productos devuelve el menú con costo, margen y receta', { skip }, as
 test('POST /ventas responde 201 con el comprobante', { skip }, async () => {
   const { status, body } = await pedir('/ventas', {
     method: 'POST',
-    body: JSON.stringify({ cajaId: 'suc-central-caja-01', items: [{ productoId: 'prod-horchata', cantidad: 2 }], montoRecibido: 5 }),
+    body: { cajaId: 'suc-central-caja-01', items: [{ productoId: 'prod-horchata', cantidad: 2 }], montoRecibido: 5 },
   });
   assert.equal(status, 201);
   assert.match(body.numero, /^FCF-01-\d{6}$/);

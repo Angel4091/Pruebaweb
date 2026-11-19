@@ -78,22 +78,33 @@ export async function obtenerNotificaciones(sucursalId) {
   return [...stock, ...pagos];
 }
 
-/** Búsqueda global (barra superior). */
-export async function buscar(q) {
+/** Pantallas que puede abrir cada rol (las mismas que muestra el menú del frontend). */
+const PANTALLAS_POR_ROL = {
+  admin: null, // todas
+  gerente: ['/', '/pos', '/inventario', '/compras', '/caja', '/personal', '/pronostico'],
+  cajero: ['/', '/pos', '/inventario', '/caja'],
+  barista: ['/', '/pos', '/inventario'],
+};
+
+/** Búsqueda global (barra superior): solo devuelve resultados de pantallas que el usuario puede abrir. */
+export async function buscar(q, usuario) {
   const texto = String(q ?? '').toLowerCase().trim();
   if (texto.length < 2) return [];
+  const sucursalId = usuario && usuario.rol !== 'admin' ? usuario.sucursalId : null;
   const [productos, insumos, empleados, proveedores, comprobantes] = await Promise.all([
     repo.buscarProductos(texto),
     repo.buscarInsumos(texto),
-    repo.buscarEmpleados(texto),
+    repo.buscarEmpleados(texto, sucursalId),
     repo.buscarProveedores(texto),
-    repo.buscarComprobantes(texto),
+    repo.buscarComprobantes(texto, sucursalId),
   ]);
+  const pantallas = usuario ? PANTALLAS_POR_ROL[usuario.rol] : null;
+  const permitido = (r) => !pantallas || pantallas.includes(r.ruta);
   return [
     ...productos.map((p) => ({ tipo: 'Producto', id: p.id, nombre: p.nombre, ruta: '/pos' })),
     ...insumos.map((i) => ({ tipo: 'Insumo', id: i.id, nombre: i.nombre, ruta: '/inventario' })),
     ...empleados.map((e) => ({ tipo: 'Empleado', id: e.id, nombre: `${e.nombre} · ${e.cargo}`, ruta: '/personal' })),
     ...proveedores.map((p) => ({ tipo: 'Proveedor', id: p.id, nombre: p.nombre, ruta: '/compras' })),
     ...comprobantes.map((v) => ({ tipo: 'Comprobante', id: v.id, nombre: v.numero, ruta: '/pos' })),
-  ].slice(0, 12);
+  ].filter(permitido).slice(0, 12);
 }

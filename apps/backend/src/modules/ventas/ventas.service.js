@@ -65,7 +65,7 @@ async function detalleVenta(venta, db = pool) {
  * 4. Asigna el correlativo, guarda la venta y descuenta el inventario.
  * Si cualquier paso falla, no se guarda nada (ni se consume el correlativo).
  */
-export async function crearVenta(data) {
+export async function crearVenta(data, usuario = null) {
   const {
     cajaId, tipoComprobante = 'FCF', tipoOrden = 'comer_aqui', clienteId = 'cli-cf', metodoPago = 'efectivo', montoRecibido, referenciaPago = '',
   } = data;
@@ -117,11 +117,19 @@ export async function crearVenta(data) {
       total,
       montoRecibido: recibido,
       cambio: round2(recibido - total),
+      creadoPor: usuario?.id ?? null,
     };
     await repo.insertarVenta(venta, client);
     await aplicarConsumo(requerimientos, sucursal.id, venta.numero, -1, client);
     return detalleVenta(await repo.obtenerVenta(venta.id, client), client);
   });
+}
+
+/** Sucursal de una venta (para validar el acceso); 404 si no existe. */
+export async function sucursalDeVenta(id) {
+  const venta = await repo.obtenerVenta(id);
+  if (!venta) throw notFound('Venta');
+  return venta.sucursalId;
 }
 
 export async function obtenerVenta(id) {
