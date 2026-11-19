@@ -12,7 +12,7 @@
                                                          database/data.json (seeds)
 ```
 
-- **Frontend:** SPA en React. Cada módulo es una página (`frontend/src/pages`) cargada con `React.lazy` desde `routes/AppRouter.jsx`. Los datos se piden con `fetch` mediante `services/api.js` (async/await, `try/catch`, errores convertidos a `ApiError`).
+- **Frontend:** SPA en React. Cada módulo es una página (`apps/frontend/src/pages`) cargada con `React.lazy` desde `routes/AppRouter.jsx`. Los datos se piden con `fetch` mediante `services/api.js` (async/await, `try/catch`, errores convertidos a `ApiError`).
 - **Backend:** API REST en Express. Las rutas (`routes/index.js`) llaman a controladores delgados; la lógica de negocio vive en `services/`. Los errores de negocio se lanzan como `AppError` con su código HTTP y el middleware `errorHandler` los responde en JSON.
 - **Persistencia:** `config/db.js` mantiene los datos en memoria y los escribe en `database/data.json` tras cada cambio (escritura atómica con archivo temporal). Si el archivo no existe, se genera con `database/seeds/seed.mjs`.
 
@@ -99,20 +99,20 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 | Componentes y Tailwind | `components/ui`, `components/layout` |
 | Enrutador | `routes/AppRouter.jsx` (React Router 7) |
 | Promesas y asincronía | `services/api.js`, `Promise.all` en `AppContext.jsx` |
-| Patrón REST y HTTP | `backend/src/routes/index.js` (GET, POST, PUT, PATCH, DELETE; 200, 201, 400, 404, 409, 422, 500) |
+| Patrón REST y HTTP | `apps/backend/src/routes/index.js` (GET, POST, PUT, PATCH, DELETE; 200, 201, 400, 404, 409, 422, 500) |
 | try/catch y manejo de errores | `api.js`, páginas (`try/catch` en cada acción), `middlewares/errorHandler.js` |
 
 ## 5. Despliegue
 
-1. `npm run build --prefix frontend` genera `frontend/dist`.
-2. Sirve `frontend/dist` con NginX o Apache y redirige `/api` al backend (`node backend/src/server.js`, puerto 3000).
+1. `npm run build` genera `apps/frontend/dist`.
+2. Sirve `apps/frontend/dist` con NginX o Apache y redirige `/api` al backend (`npm start`, puerto 3000).
 
 Ejemplo de NginX:
 
 ```nginx
 server {
   listen 80;
-  root /var/www/origenes/frontend/dist;
+  root /var/www/origenes/apps/frontend/dist;
   location / { try_files $uri /index.html; }
   location /api/ { proxy_pass http://127.0.0.1:3000; }
 }
@@ -120,6 +120,6 @@ server {
 
 ## 6. Pruebas
 
-`npm test` ejecuta `backend/tests` con `node:test`, usando un archivo de datos temporal:
+`npm test` ejecuta `apps/backend/tests` con `node:test`, usando un archivo de datos temporal:
 - Tramos de renta, techo del ISSS y AFP.
 - IVA del 13 %, descuento de receta del Latte grande, correlativos, validación de CCF, faltantes de stock, anulación y cuadre de caja.

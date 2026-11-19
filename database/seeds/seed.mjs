@@ -14,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   calcularDetalleEmpleado,
   totalizarPlanilla,
-} from '../../backend/src/utils/planilla.js';
+} from '../../apps/backend/src/utils/planilla.js';
 
 const round2 = (v) => Math.round((Number(v) + Number.EPSILON) * 100) / 100;
 const pad = (n, size = 2) => String(n).padStart(size, '0');

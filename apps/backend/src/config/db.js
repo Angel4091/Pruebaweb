@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { config } from './env.js';
-import { buildSeed } from '../../../database/seeds/seed.mjs';
+import { buildSeed } from '../../../../database/seeds/seed.mjs';
 
 /**
  * Capa de persistencia basada en un archivo JSON.

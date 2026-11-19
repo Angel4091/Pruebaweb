@@ -8,6 +8,6 @@ const backendRoot = path.resolve(__dirname, '..', '..');
 export const config = {
   port: Number(process.env.PORT) || 3000,
   corsOrigin: process.env.CORS_ORIGIN || '*',
-  dataFile: path.resolve(backendRoot, process.env.DATA_FILE || '../database/data.json'),
-  seedFile: path.resolve(backendRoot, '../database/seeds/seed.mjs'),
+  dataFile: path.resolve(backendRoot, process.env.DATA_FILE || '../../database/data.json'),
+  seedFile: path.resolve(backendRoot, '../../database/seeds/seed.mjs'),
 };
