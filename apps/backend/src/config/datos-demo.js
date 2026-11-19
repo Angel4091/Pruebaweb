@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { buildSeed } from '../../../../database/seeds/seed.mjs';
 import { config } from './env.js';
+import { insertarFilas } from './database.js';
 
 /**
  * Carga los datos de demostración en PostgreSQL.
@@ -36,26 +37,6 @@ export function validarSeedPassword(password = config.seedPassword) {
     throw new Error('SEED_PASSWORD no es segura: configúrala en apps/backend/.env con al menos 12 caracteres.');
   }
   return password;
-}
-
-/**
- * Inserta muchas filas en lotes con una sola consulta parametrizada por lote.
- * El nombre de la tabla y las columnas son constantes del código, nunca datos del usuario.
- */
-export async function insertarFilas(client, tabla, columnas, filas) {
-  const LOTE = 500;
-  for (let inicio = 0; inicio < filas.length; inicio += LOTE) {
-    const lote = filas.slice(inicio, inicio + LOTE);
-    const valores = [];
-    const marcadores = lote.map((fila) => {
-      const posiciones = fila.map((valor) => {
-        valores.push(valor);
-        return `$${valores.length}`;
-      });
-      return `(${posiciones.join(', ')})`;
-    });
-    await client.query(`insert into ${tabla} (${columnas.join(', ')}) values ${marcadores.join(', ')}`, valores);
-  }
 }
 
 const json = (valor) => (valor === null || valor === undefined ? null : JSON.stringify(valor));

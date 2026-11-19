@@ -1,7 +1,7 @@
-import { db } from '../config/db.js';
-import { round2, round4 } from '../utils/money.js';
-import { toDateKey, addDays } from '../utils/dates.js';
-import { validarSucursal, listarInsumos } from './inventario.service.js';
+import { round2, round4 } from '../../utils/money.js';
+import { toDateKey, addDays, inicioDelDia } from '../../utils/dates.js';
+import { listarInsumos } from '../inventario/inventario.service.js';
+import * as repo from './pronostico.repository.js';
 
 /**
  * Pronóstico de consumo de insumos.
@@ -14,45 +14,39 @@ import { validarSucursal, listarInsumos } from './inventario.service.js';
 const DIAS_HISTORIA = 14;
 const HORIZONTE = 7;
 
-function consumoDiario(sucursalId, desde) {
-  const productos = new Map(db.collection('productos').map((p) => [p.id, p]));
-  const insumos = new Map(db.collection('insumos').map((i) => [i.id, i]));
-  const porDia = new Map(); // fecha → Map(insumoId → cantidad)
-  for (const venta of db.collection('ventas')) {
-    if (venta.sucursalId !== sucursalId || venta.estado !== 'emitida') continue;
-    const fecha = toDateKey(venta.fecha);
-    if (fecha < desde) continue;
+/** Agrupa el consumo por día local: fecha → Map(insumoId → cantidad). */
+function agruparPorDia(filas) {
+  const porDia = new Map();
+  for (const fila of filas) {
+    const fecha = toDateKey(fila.fecha);
     if (!porDia.has(fecha)) porDia.set(fecha, new Map());
     const dia = porDia.get(fecha);
-    for (const item of venta.items) {
-      const prod = productos.get(item.productoId);
-      if (!prod) continue;
-      for (const r of prod.receta) {
-        dia.set(r.insumoId, (dia.get(r.insumoId) ?? 0) + r.cantidad * item.cantidad);
-      }
-    }
+    dia.set(fila.insumoId, (dia.get(fila.insumoId) ?? 0) + fila.cantidad);
   }
+  return porDia;
+}
+
+export async function calcularPronostico(sucursalId, horizonte = HORIZONTE) {
+  const insumosSucursal = await listarInsumos(sucursalId); // también valida la sucursal
+  const costos = new Map(insumosSucursal.map((i) => [i.id, i.costoUnitario]));
+
+  const hoy = new Date();
+  const fechas = Array.from({ length: DIAS_HISTORIA }, (_, i) => toDateKey(addDays(hoy, i - DIAS_HISTORIA)));
+  const porDia = agruparPorDia(await repo.consumoDesde(sucursalId, inicioDelDia(fechas[0])));
+
   const costoDia = (fecha) => {
     const dia = porDia.get(fecha);
     if (!dia) return 0;
     let total = 0;
-    for (const [insumoId, cantidad] of dia) total += cantidad * (insumos.get(insumoId)?.costoUnitario ?? 0);
+    for (const [insumoId, cantidad] of dia) total += cantidad * (costos.get(insumoId) ?? 0);
     return round2(total);
   };
-  return { porDia, costoDia };
-}
-
-export function calcularPronostico(sucursalId, horizonte = HORIZONTE) {
-  validarSucursal(sucursalId);
-  const hoy = new Date();
-  const fechas = Array.from({ length: DIAS_HISTORIA }, (_, i) => toDateKey(addDays(hoy, i - DIAS_HISTORIA)));
-  const { porDia, costoDia } = consumoDiario(sucursalId, fechas[0]);
 
   // Factor por día de la semana: consumo del día / promedio del periodo.
-  const costos = fechas.map(costoDia);
-  const promedioGeneral = costos.reduce((a, b) => a + b, 0) / costos.length || 1;
+  const costosPeriodo = fechas.map(costoDia);
+  const promedioGeneral = costosPeriodo.reduce((a, b) => a + b, 0) / costosPeriodo.length || 1;
   const factorSemana = Array.from({ length: 7 }, (_, dow) => {
-    const valores = fechas.map((f, i) => [new Date(`${f}T12:00:00`).getDay(), costos[i]]).filter(([d]) => d === dow).map(([, v]) => v);
+    const valores = fechas.map((f, i) => [new Date(`${f}T12:00:00`).getDay(), costosPeriodo[i]]).filter(([d]) => d === dow).map(([, v]) => v);
     return valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length / promedioGeneral : 1;
   });
 
@@ -74,7 +68,7 @@ export function calcularPronostico(sucursalId, horizonte = HORIZONTE) {
   }
 
   // Proyección por insumo.
-  const insumos = listarInsumos(sucursalId).map((ins) => {
+  const insumos = insumosSucursal.map((ins) => {
     const consumo7 = ultimos7.reduce((a, f) => a + (porDia.get(f)?.get(ins.id) ?? 0), 0);
     const promedioDiario = round4(consumo7 / 7);
     const proyectado = round4(promedioDiario * horizonte);

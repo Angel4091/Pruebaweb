@@ -8,15 +8,17 @@ Base: `http://localhost:3000/api` · Formato: JSON · Errores: `{ "error": "mens
 | 201 | Recurso creado (POST) |
 | 400 | Parámetro faltante o JSON inválido |
 | 404 | Recurso o ruta inexistente |
-| 409 | Conflicto de negocio (caja cerrada, stock insuficiente, planilla duplicada) |
-| 422 | Datos inválidos (validaciones) |
-| 500 | Error interno |
+| 409 | Conflicto de negocio (caja cerrada, stock insuficiente, planilla duplicada, registro repetido) |
+| 413 | Petición o imagen demasiado grande |
+| 422 | Datos inválidos (validaciones o reglas de la base de datos) |
+| 500 | Error interno (sin detalles de la base de datos) |
+| 503 | La base de datos no responde (`/salud`) |
 
 ## General
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/salud` | Estado de la API |
+| GET | `/salud` | Estado de la API y de PostgreSQL (503 si la base no responde) |
 | GET | `/sucursales` | Lista de sucursales |
 | GET | `/dashboard?sucursalId=` | Indicadores del tablero |
 | GET | `/notificaciones?sucursalId=` | Alertas de stock y pagos próximos |

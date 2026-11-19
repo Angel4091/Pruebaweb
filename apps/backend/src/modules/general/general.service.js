@@ -1,25 +1,37 @@
-import { db } from '../config/db.js';
-import { AppError } from '../utils/AppError.js';
-import { newId } from '../utils/ids.js';
+import { AppError, notFound } from '../../utils/AppError.js';
+import { newId } from '../../utils/ids.js';
+import { withTransaction, probarConexion } from '../../config/database.js';
+import { cargarDatosDemo } from '../../config/datos-demo.js';
+import * as repo from './general.repository.js';
 
 /* ---------- Sucursales ---------- */
-export const listarSucursales = () => db.collection('sucursales');
 
-/* ---------- Clientes ---------- */
-export function listarClientes(q) {
-  const texto = q?.toLowerCase().trim();
-  return db
-    .collection('clientes')
-    .filter((c) => !texto || c.nombre.toLowerCase().includes(texto) || c.nit.includes(texto) || c.nrc.includes(texto));
+export const listarSucursales = () => repo.listarSucursales();
+
+/** Devuelve la sucursal o lanza 404. La usan los demás módulos para validar el parámetro sucursalId. */
+export async function validarSucursal(sucursalId, db) {
+  const sucursal = await repo.obtenerSucursal(sucursalId, db);
+  if (!sucursal) throw notFound('Sucursal');
+  return sucursal;
 }
 
-export function crearCliente(data) {
+/* ---------- Clientes ---------- */
+
+export const listarClientes = (q) => repo.listarClientes(q?.toLowerCase().trim());
+
+export async function obtenerCliente(id, db) {
+  const cliente = await repo.obtenerCliente(id, db);
+  if (!cliente) throw notFound('Cliente');
+  return cliente;
+}
+
+export async function crearCliente(data) {
   const tipo = data.tipo === 'contribuyente' ? 'contribuyente' : 'consumidor_final';
   if (tipo === 'contribuyente' && (!data.nit || !data.nrc || !data.giro)) {
     throw new AppError('Un contribuyente necesita NIT, NRC y giro para emitir CCF', 422);
   }
   if (data.nit && !/^\d{4}-\d{6}-\d{3}-\d$/.test(data.nit)) throw new AppError('El NIT debe tener el formato 0000-000000-000-0', 422);
-  const cliente = {
+  return repo.crearCliente({
     id: newId('cli'),
     nombre: String(data.nombre).trim(),
     tipo,
@@ -28,20 +40,22 @@ export function crearCliente(data) {
     giro: data.giro ?? '',
     direccion: data.direccion ?? '',
     telefono: data.telefono ?? '',
-  };
-  db.collection('clientes').push(cliente);
-  db.save();
-  return cliente;
+  });
 }
 
-/* ---------- Configuración de identidad visual ---------- */
+/* ---------- Identidad visual ---------- */
+
 const HEX = /^#[0-9a-fA-F]{6}$/;
 export const FUENTES = ['Poppins', 'Roboto', 'Montserrat', 'Nunito', 'Lora', 'Playfair Display', 'Outfit'];
 
-export const obtenerConfiguracion = () => db.data.configuracion;
+export async function obtenerConfiguracion() {
+  const configuracion = await repo.obtenerConfiguracion();
+  if (!configuracion) throw notFound('Configuración');
+  return configuracion;
+}
 
-export function actualizarConfiguracion(data) {
-  const actual = db.data.configuracion;
+export async function actualizarConfiguracion(data) {
+  const actual = await obtenerConfiguracion();
   if (data.nombre !== undefined) {
     if (!String(data.nombre).trim()) throw new AppError('El nombre del restaurante no puede quedar vacío', 422);
     actual.nombre = String(data.nombre).trim();
@@ -71,6 +85,22 @@ export function actualizarConfiguracion(data) {
       if (data.componentes[key] !== undefined) actual.componentes[key] = Boolean(data.componentes[key]);
     }
   }
-  db.save();
-  return actual;
+  return repo.guardarConfiguracion(actual);
+}
+
+/* ---------- Sistema ---------- */
+
+/** Vuelve a cargar los datos de demostración en una sola transacción. */
+export async function reiniciarDatos() {
+  await withTransaction((client) => cargarDatosDemo(client));
+}
+
+/** Estado de la API y de la base de datos. */
+export async function salud() {
+  try {
+    await probarConexion();
+    return { estado: 'ok', baseDeDatos: 'ok', fecha: new Date().toISOString() };
+  } catch {
+    return { estado: 'degradado', baseDeDatos: 'sin conexión', fecha: new Date().toISOString() };
+  }
 }

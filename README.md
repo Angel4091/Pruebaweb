@@ -28,9 +28,9 @@ Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias li
 ## 🛠️ Tecnologías
 
 - **Frontend:** React 19 + Vite, React Router, Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`, `useContext`, hooks propios), Tailwind CSS 4, íconos Lucide.
-- **Backend:** Node.js + Express 5, API REST con controladores, servicios y middlewares de validación y errores.
-- **Persistencia:** archivo JSON (`database/data.json`) generado desde los *seeds*, para que el proyecto funcione en cualquier equipo con solo `npm run setup` (sin instalar un motor de base de datos).
-- **Pruebas:** `node:test` (planilla, IVA, recetas, correlativos, cuadre de caja).
+- **Backend:** Node.js + Express 5, API REST organizada por módulos; cada módulo tiene rutas → controlador → servicio → repositorio.
+- **Base de datos:** PostgreSQL 16 con el driver `pg`, SQL parametrizado y sin ORM. Las ventas, compras, cierres de caja y planillas se guardan en transacciones. Para desarrollo se levanta con Docker (`docker-compose.yml`).
+- **Pruebas:** `node:test` contra una base de pruebas separada (planilla, IVA, recetas, correlativos, transacciones, cuadre de caja y rutas de la API).
 
 ## 📁 Estructura del repositorio
 
@@ -38,14 +38,16 @@ Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias li
 .
 ├── apps/
 │   ├── backend/                 # API REST (Node.js + Express)
+│   │   ├── scripts/             # db-init.mjs y db-seed.mjs
 │   │   ├── src/
-│   │   │   ├── config/          # Variables de entorno y capa de datos (JSON)
-│   │   │   ├── controllers/     # Traducen HTTP ⇄ servicios
+│   │   │   ├── config/          # Variables de entorno, pool de PostgreSQL y datos de demo
 │   │   │   ├── middlewares/     # Validación y manejo central de errores
-│   │   │   ├── routes/          # Definición de rutas REST
-│   │   │   ├── services/        # Lógica de negocio por módulo
+│   │   │   ├── modules/         # Un módulo por área: ventas, caja, inventario, productos,
+│   │   │   │                    #   compras, rrhh, pronostico, tablero, general
+│   │   │   │                    #   (cada uno con routes, controller, service y repository)
+│   │   │   ├── routes/          # Junta las rutas de todos los módulos bajo /api
 │   │   │   └── utils/           # IVA, planilla, fechas, ids, errores
-│   │   └── tests/               # Pruebas unitarias e integración de servicios
+│   │   └── tests/               # Pruebas con node:test
 │   └── frontend/                # Aplicación React (Vite)
 │       └── src/
 │           ├── components/      # layout, ui, charts, decor (ilustraciones)
@@ -56,44 +58,61 @@ Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias li
 │           ├── services/        # Cliente HTTP y servicios por módulo
 │           └── utils/           # Formateadores
 ├── database/
-│   ├── seeds/seed.mjs           # Datos iniciales (menú, recetas, historial)
-│   └── migrations/
+│   ├── schema.sql               # Tablas, reglas (check, llaves foráneas) e índices
+│   ├── seeds/seed.mjs           # Datos de demo (menú, recetas, historial de 14 días)
+│   └── docker/                  # Crea la base de pruebas al levantar el contenedor
 ├── docs/                        # Manuales, decisiones, clases, IEEE y seguimiento
+├── docker-compose.yml           # PostgreSQL para desarrollo
 ├── CONTRIBUTING.md              # Gitflow y formato de commits
 └── package.json                 # Scripts para instalar y correr todo junto
 ```
 
 ## 🚀 Instalación y ejecución
 
-Requisitos: **Node.js 22.12 o superior** y npm.
+Requisitos: **Node.js 22.12 o superior**, npm y **Docker Desktop** (o un PostgreSQL 16 propio).
 
-```bash
-git clone https://github.com/Angel4091/Pruebaweb.git
-cd Pruebaweb
-npm run setup
-npm run dev
-```
+1. Clona el repositorio e instala las dependencias:
+
+   ```bash
+   git clone https://github.com/Angel4091/Pruebaweb.git
+   cd Pruebaweb
+   npm run setup
+   ```
+
+2. Copia `apps/backend/.env.example` como `apps/backend/.env` y completa:
+   - `DB_PASSWORD`: cualquier contraseña para tu base local.
+   - `SEED_PASSWORD`: la contraseña de los usuarios de prueba (12 caracteres o más).
+
+3. Levanta PostgreSQL, crea las tablas y carga los datos de demo:
+
+   ```bash
+   npm run db:up
+   npm run db:init
+   npm run db:seed
+   ```
+
+4. Arranca la API y la web:
+
+   ```bash
+   npm run dev
+   ```
 
 - Web: http://localhost:5173
-- API: http://localhost:3000/api
+- API: http://localhost:3000/api (`/api/salud` confirma que la base responde)
 
-La primera vez que arranca, la API crea `database/data.json` a partir de los seeds. Para volver a los datos iniciales:
+`npm run db:seed` también sirve para volver a los datos iniciales. Crea un usuario por rol (`admin`, `gerente`, `cajero` y `barista`, todos `@origenes.test`) con la contraseña de `SEED_PASSWORD`; el inicio de sesión llega en la Fase 3.
 
-```bash
-npm run db:seed
-```
-
-Pruebas del backend:
+Pruebas del backend (usan la base `origenes_test`, separada de la de desarrollo; PostgreSQL debe estar levantado):
 
 ```bash
 npm test
 ```
 
-Para producción, `npm run build` genera el frontend en `apps/frontend/dist` y `npm start` levanta la API.
+Para producción, `npm run build` genera el frontend en `apps/frontend/dist` y `npm start` levanta la API. `npm run db:down` detiene el contenedor de PostgreSQL sin borrar los datos.
 
-### Variables de entorno (opcionales)
+### Variables de entorno
 
-Copia `apps/backend/.env.example` a `apps/backend/.env` si necesitas cambiar el puerto, el archivo de datos o el origen permitido por CORS. En el frontend, `VITE_API_URL` permite apuntar a una API desplegada en otro dominio.
+Todas están explicadas en `apps/backend/.env.example`. El archivo `.env` nunca se sube al repositorio. En el frontend, `VITE_API_URL` permite apuntar a una API desplegada en otro dominio.
 
 ## 🌿 Flujo de trabajo (Gitflow)
 
