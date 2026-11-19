@@ -1,33 +1,34 @@
-﻿ticket,fase,area,integrante,descripcion,rama,estado,pull_request,inicio,fin,notas
-OP-000,0,OP,Angel4091,"Agrega lineamientos, clases, registro de decisiones, flujo de ramas y este seguimiento",feature/angel/OP-000,en revisión,,2026-11-18,,
-OP-001,1,OP,Angel4091,"Mueve backend y frontend a apps/ y agrega los scripts setup, dev, db:seed, build y start (db:init llega con DB-003)",feature/angel/OP-001,en revisión,,2026-11-18,,"D-08; reasignado del Integrante 8"
-DB-001,2,DB,Angel4091,"Escribe database/schema.sql con checks, llaves foráneas, índices, bitácora, versión y orden de alta",feature/angel/DB-001,en revisión,,2026-11-18,,"D-06, D-19; reasignado del Integrante 1"
-DB-002,2,DB,Angel4091,Carga los datos de demo en PostgreSQL y crea un usuario por rol con bcrypt desde SEED_PASSWORD,feature/angel/DB-001,en revisión,,2026-11-18,,"D-04, D-24; reasignado del Integrante 1"
-DB-003,2,DB,Angel4091,"Agrega db:init, db:seed, el pool de pg con transacciones y docker-compose solo para PostgreSQL",feature/angel/DB-001,en revisión,,2026-11-18,,"D-11, D-25; reasignado del Integrante 1"
-BE-010,2,BE,Angel4091,Repositorio de ventas y registro de la venta en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 3
-BE-012,2,BE,Angel4091,Repositorio de caja y cierre de turno en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 3
-BE-020,2,BE,Angel4091,"Repositorios de inventario, productos y recetas",feature/angel/BE-020,en revisión,,2026-11-18,,"D-15, D-23; reasignado del Integrante 4"
-BE-021,2,BE,Angel4091,Repositorio de compras; compra y cuenta por pagar en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 4
-BE-030,2,BE,Angel4091,Repositorio de RR. HH. y generación de planilla en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 5
-BE-031,2,BE,Angel4091,Pronóstico y tablero de inicio leyendo de PostgreSQL,feature/angel/BE-020,en revisión,,2026-11-18,,D-16; reasignado del Integrante 5
-BE-001,3,BE,Angel4091,Módulo auth: login y me con bcrypt y JWT (HS256 con issuer y audience),feature/angel/BE-001,en revisión,,2026-11-18,,"D-27; reasignado del Integrante 2"
-BE-002,3,BE,Angel4091,"Middlewares de autenticación (401), roles (403) y sucursal",feature/angel/BE-001,en revisión,,2026-11-18,,"D-04, D-28; reasignado del Integrante 2"
-BE-003,3,BE,Angel4091,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",feature/angel/BE-001,en revisión,,2026-11-18,,"D-09, D-20; reasignado del Integrante 2"
-BE-004,3,BE,Angel4091,"Usuarios y accesos: crear, asignar rol y sucursal, desactivar",feature/angel/BE-001,en revisión,,2026-11-18,,"D-18; reasignado del Integrante 2"
-FE-001,4,FE,Angel4091,Pantalla de inicio de sesión con el estilo actual,feature/angel/FE-001,en revisión,,2026-11-18,,"D-13; adelantado a la Fase 3; reasignado del Integrante 6"
-FE-002,4,FE,Angel4091,Sesión y token en api.js; la sesión vencida vuelve al login,feature/angel/FE-001,en revisión,,2026-11-18,,"D-29; adelantado a la Fase 3; reasignado del Integrante 6"
-FE-003,4,FE,Angel4091,Menú y acciones según el rol,feature/angel/FE-001,en revisión,,2026-11-18,,"D-04, D-28; adelantado a la Fase 3; reasignado del Integrante 6"
-FE-004,4,FE,Angel4091,"Módulo Administración: accesos, bitácora y datos de demo",feature/angel/FE-001,en revisión,,2026-11-18,,"D-18; la pestaña Bitácora llegó en feature/angel/BE-011 con BE-032 y BE-033; reasignado del Integrante 6"
-FE-005,4,FE,Angel4091,Guía rápida con los módulos del rol,feature/angel/FE-001,en revisión,,2026-11-18,,"adelantado a la Fase 3; reasignado del Integrante 6"
-BE-011,5,BE,Angel4091,IVA incluido en la factura de consumidor final y desglosado en el crédito fiscal,feature/angel/BE-011,en revisión,,2026-11-19,,"D-14; reasignado del Integrante 3"
-BE-013,5,BE,Angel4091,Quién registró y versión en ventas y compras; 409 al editar productos o insumos con datos viejos,feature/angel/BE-011,en revisión,,2026-11-19,,"D-19; reasignado del Integrante 3"
-BE-022,5,BE,Angel4091,"CRUD completo de clientes, insumos y proveedores (eliminar es desactivar)",feature/angel/BE-011,en revisión,,2026-11-19,,"D-05; reasignado del Integrante 4"
-BE-032,5,BE,Angel4091,Bitácora de auditoría y paginación en el servidor,feature/angel/BE-011,en revisión,,2026-11-19,,"D-30, D-31; reasignado del Integrante 5"
-BE-033,5,BE,Angel4091,Consulta de la bitácora con filtros,feature/angel/BE-011,en revisión,,2026-11-19,,"reasignado del Integrante 5"
-QA-001,1-5,QA,Angel4091,Pruebas con node:test de servicios y rutas,feature/angel/BE-011,en revisión,,2026-11-18,,"75 pruebas (ventas, api, planilla, seguridad, reglas); reasignado del Integrante 7"
-QA-002,5,QA,Angel4091,Colección de Postman con todos los endpoints,feature/angel/BE-011,en revisión,,2026-11-19,,"35 peticiones y 42 pruebas; reasignado del Integrante 7"
-QA-003,1-6,QA,Angel4091,Venta completa y prueba en un clon limpio al cerrar cada fase,feature/angel/OP-002,en revisión,,2026-11-18,,"D-11; hecho en las fases 2, 3, 5 y 6; reasignado del Integrante 7"
-OP-002,6,OP,Angel4091,deploy/nginx.conf con proxy inverso y HTTPS,feature/angel/OP-002,en revisión,,2026-11-19,,"D-12; probado con NginX 1.24 en Docker; reasignado del Integrante 8"
-DOC-001,7,DOC,Angel4091,"Arquitectura (Mermaid), endpoints, manual de usuario, requisitos técnicos y uso de IA",feature/angel/DOC-001,en revisión,,2026-11-19,,"D-33; endpoints verificados contra las 68 rutas; reasignado del Integrante 8"
-DOC-002,7,DOC,Angel4091,Guía de defensa,feature/angel/DOC-001,en revisión,,2026-11-19,,"Cada integrante revisa su sección; reasignado del Integrante 8"
-DOC-003,7,DOC,Todos,Informe IEEE (coordina Integrante 8),,pendiente,,,,
+﻿ticket,fase,area,integrante,descripcion,rama,estado,pull_request,commits_por,inicio,fin,notas
+OP-000,0,OP,YukioOgawa-UCA,"Agrega lineamientos, clases, registro de decisiones, flujo de ramas y este seguimiento",feature/angel/OP-000,hecho,https://github.com/Angel4091/Pruebaweb/pull/1,Angel4091,2026-11-18,2026-11-19,
+OP-001,1,OP,Angel4091,"Mueve backend y frontend a apps/ y agrega los scripts setup, dev, db:seed, build y start (db:init llega con DB-003)",feature/angel/OP-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/2,Angel4091,2026-11-18,2026-11-19,D-08
+DB-001,2,DB,diegochavez985,"Escribe database/schema.sql con checks, llaves foráneas, índices, bitácora, versión y orden de alta",feature/angel/DB-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/3,Angel4091,2026-11-18,2026-11-19,"D-06, D-19"
+DB-002,2,DB,diegochavez985,Carga los datos de demo en PostgreSQL y crea un usuario por rol con bcrypt desde SEED_PASSWORD,feature/angel/DB-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/3,Angel4091,2026-11-18,2026-11-19,"D-04, D-24"
+DB-003,2,DB,diegochavez985,"Agrega db:init, db:seed, el pool de pg con transacciones y docker-compose solo para PostgreSQL",feature/angel/DB-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/3,Angel4091,2026-11-18,2026-11-19,"D-11, D-25"
+BE-010,2,BE,DIEGO-BIT444,Repositorio de ventas y registro de la venta en una transacción,feature/angel/BE-020,hecho,https://github.com/Angel4091/Pruebaweb/pull/4,Angel4091,2026-11-18,2026-11-19,
+BE-012,2,BE,DIEGO-BIT444,Repositorio de caja y cierre de turno en una transacción,feature/angel/BE-020,hecho,https://github.com/Angel4091/Pruebaweb/pull/4,Angel4091,2026-11-18,2026-11-19,
+BE-020,2,BE,diegochavez985,"Repositorios de inventario, productos y recetas",feature/angel/BE-020,hecho,https://github.com/Angel4091/Pruebaweb/pull/4,Angel4091,2026-11-18,2026-11-19,"D-15, D-23"
+BE-021,2,BE,DIEGO-BIT444,Repositorio de compras; compra y cuenta por pagar en una transacción,feature/angel/BE-020,hecho,https://github.com/Angel4091/Pruebaweb/pull/4,Angel4091,2026-11-18,2026-11-19,
+BE-030,2,BE,DIEGO-BIT444,Repositorio de RR. HH. y generación de planilla en una transacción,feature/angel/BE-020,hecho,https://github.com/Angel4091/Pruebaweb/pull/4,Angel4091,2026-11-18,2026-11-19,
+BE-031,2,BE,diegochavez985,Pronóstico y tablero de inicio leyendo de PostgreSQL,feature/angel/BE-020,hecho,https://github.com/Angel4091/Pruebaweb/pull/4,Angel4091,2026-11-18,2026-11-19,D-16
+BE-001,3,BE,Angel4091,Módulo auth: login y me con bcrypt y JWT (HS256 con issuer y audience),feature/angel/BE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/5,Angel4091,2026-11-18,2026-11-19,D-27
+BE-002,3,BE,Angel4091,"Middlewares de autenticación (401), roles (403) y sucursal",feature/angel/BE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/5,Angel4091,2026-11-18,2026-11-19,"D-04, D-28"
+BE-003,3,BE,Angel4091,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",feature/angel/BE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/5,Angel4091,2026-11-18,2026-11-19,"D-09, D-20"
+BE-004,3,BE,Angel4091,"Usuarios y accesos: crear, asignar rol y sucursal, desactivar",feature/angel/BE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/5,Angel4091,2026-11-18,2026-11-19,D-18
+FE-001,4,FE,RN31-project,Pantalla de inicio de sesión con el estilo actual,feature/angel/FE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/6,Angel4091,2026-11-18,2026-11-19,D-13; adelantado a la Fase 3
+FE-002,4,FE,Alexeivalley,Sesión y token en api.js; la sesión vencida vuelve al login,feature/angel/FE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/6,Angel4091,2026-11-18,2026-11-19,D-29; adelantado a la Fase 3
+FE-003,4,FE,RN31-project,Menú y acciones según el rol,feature/angel/FE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/6,Angel4091,2026-11-18,2026-11-19,"D-04, D-28; adelantado a la Fase 3"
+FE-004,4,FE,Alexeivalley,"Módulo Administración: accesos, bitácora y datos de demo",feature/angel/FE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/6,Angel4091,2026-11-18,2026-11-19,D-18; la pestaña Bitácora llegó en feature/angel/BE-011 con BE-032 y BE-033
+FE-005,4,FE,RN31-project,Guía rápida con los módulos del rol,feature/angel/FE-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/6,Angel4091,2026-11-18,2026-11-19,adelantado a la Fase 3
+BE-011,5,BE,DIEGO-BIT444,IVA incluido en la factura de consumidor final y desglosado en el crédito fiscal,feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-19,2026-11-19,D-14
+BE-013,5,BE,DIEGO-BIT444,Quién registró y versión en ventas y compras; 409 al editar productos o insumos con datos viejos,feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-19,2026-11-19,D-19
+BE-022,5,BE,Angel4091,"CRUD completo de clientes, insumos y proveedores (eliminar es desactivar)",feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-19,2026-11-19,D-05
+BE-032,5,BE,diegochavez985,Bitácora de auditoría y paginación en el servidor,feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-19,2026-11-19,"D-30, D-31"
+BE-033,5,BE,diegochavez985,Consulta de la bitácora con filtros,feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-19,2026-11-19,
+QA-001,1-5,QA,luismurcia26,Pruebas con node:test de servicios y rutas,feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-18,2026-11-19,"75 pruebas (ventas, api, planilla, seguridad, reglas)"
+QA-002,5,QA,rubenmartinez10,Colección de Postman con todos los endpoints,feature/angel/BE-011,hecho,https://github.com/Angel4091/Pruebaweb/pull/7,Angel4091,2026-11-19,2026-11-19,35 peticiones y 42 pruebas
+QA-003,1-6,QA,luismurcia26,Venta completa y prueba en un clon limpio al cerrar cada fase,feature/angel/OP-002,hecho,https://github.com/Angel4091/Pruebaweb/pull/8,Angel4091,2026-11-18,2026-11-19,"D-11; hecho en las fases 2, 3, 5 y 6"
+OP-002,6,OP,Angel4091,deploy/nginx.conf con proxy inverso y HTTPS,feature/angel/OP-002,hecho,https://github.com/Angel4091/Pruebaweb/pull/8,Angel4091,2026-11-19,2026-11-19,D-12; probado con NginX 1.24 en Docker
+DOC-001,7,DOC,rubenmartinez10,"Arquitectura (Mermaid), endpoints, manual de usuario, requisitos técnicos y uso de IA",feature/angel/DOC-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/9,Angel4091,2026-11-19,2026-11-19,D-33; endpoints verificados contra las 68 rutas
+DOC-002,7,DOC,YukioOgawa-UCA,Guía de defensa,feature/angel/DOC-001,hecho,https://github.com/Angel4091/Pruebaweb/pull/9,Angel4091,2026-11-19,2026-11-19,Cada integrante revisa su sección
+DOC-003,7,DOC,Todos,"Informe IEEE (coordina Rubén, documentación)",,pendiente,,,,,
+DOC-004,7,DOC,YukioOgawa-UCA,"Seguimiento en Excel con los integrantes, su rol y los responsables de cada ticket",feature/angel/DOC-004,en revisión,,Angel4091,2026-11-19,,"D-34; el Excel del repositorio va sin carnés porque el repositorio es público"
