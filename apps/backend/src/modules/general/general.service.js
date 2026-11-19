@@ -17,7 +17,10 @@ export async function validarSucursal(sucursalId, db) {
 
 /* ---------- Clientes ---------- */
 
-export const listarClientes = (q) => repo.listarClientes(q?.toLowerCase().trim());
+/** El cliente genérico de las facturas de consumidor final: siempre debe existir y estar activo. */
+export const CLIENTE_CONSUMIDOR_FINAL = 'cli-cf';
+
+export const listarClientes = ({ q, activo = true } = {}) => repo.listarClientes({ texto: q?.toLowerCase().trim(), activo });
 
 export async function obtenerCliente(id, db) {
   const cliente = await repo.obtenerCliente(id, db);
@@ -25,23 +28,46 @@ export async function obtenerCliente(id, db) {
   return cliente;
 }
 
-export async function crearCliente(data) {
-  const tipo = data.tipo === 'contribuyente' ? 'contribuyente' : 'consumidor_final';
-  if (tipo === 'contribuyente' && (!data.nit || !data.nrc || !data.giro)) {
+/** Reglas de un cliente: el contribuyente necesita NIT, NRC y giro para recibir un CCF. */
+function validarCliente(c) {
+  if (!String(c.nombre ?? '').trim()) throw new AppError('El nombre del cliente es obligatorio', 422);
+  if (c.tipo === 'contribuyente' && (!c.nit || !c.nrc || !c.giro)) {
     throw new AppError('Un contribuyente necesita NIT, NRC y giro para emitir CCF', 422);
   }
-  if (data.nit && !/^\d{4}-\d{6}-\d{3}-\d$/.test(data.nit)) throw new AppError('El NIT debe tener el formato 0000-000000-000-0', 422);
-  return repo.crearCliente({
+  if (c.nit && !/^\d{4}-\d{6}-\d{3}-\d$/.test(c.nit)) throw new AppError('El NIT debe tener el formato 0000-000000-000-0', 422);
+}
+
+export async function crearCliente(data) {
+  const cliente = {
     id: newId('cli'),
-    nombre: String(data.nombre).trim(),
-    tipo,
+    nombre: String(data.nombre ?? '').trim(),
+    tipo: data.tipo === 'contribuyente' ? 'contribuyente' : 'consumidor_final',
     nit: data.nit ?? '',
     nrc: data.nrc ?? '',
     giro: data.giro ?? '',
     direccion: data.direccion ?? '',
     telefono: data.telefono ?? '',
-  });
+  };
+  validarCliente(cliente);
+  return repo.crearCliente(cliente);
 }
+
+export async function actualizarCliente(id, data) {
+  const cliente = await obtenerCliente(id);
+  for (const key of ['nombre', 'nit', 'nrc', 'giro', 'direccion', 'telefono']) {
+    if (data[key] !== undefined) cliente[key] = String(data[key] ?? '').trim();
+  }
+  if (data.tipo !== undefined) cliente.tipo = data.tipo === 'contribuyente' ? 'contribuyente' : 'consumidor_final';
+  if (data.activo !== undefined) cliente.activo = Boolean(data.activo);
+  if (id === CLIENTE_CONSUMIDOR_FINAL && !cliente.activo) {
+    throw new AppError('El cliente "Consumidor final" no se puede desactivar: lo usan todas las facturas', 409);
+  }
+  validarCliente(cliente);
+  return repo.guardarCliente(cliente);
+}
+
+/** Baja lógica: el cliente ya no aparece en el POS, pero sus comprobantes se conservan. */
+export const desactivarCliente = (id) => actualizarCliente(id, { activo: false });
 
 /* ---------- Identidad visual ---------- */
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireFields } from '../../middlewares/validate.js';
-import { permitir, TODOS, SOLO_ADMIN } from '../../middlewares/roles.js';
+import { permitir, TODOS, GESTION, SOLO_ADMIN } from '../../middlewares/roles.js';
 import { esProduccion } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import * as gen from './general.controller.js';
@@ -26,9 +26,13 @@ router.post('/sistema/reiniciar', permitir(SOLO_ADMIN), soloFueraDeProduccion, g
 
 router.get('/sucursales', permitir(TODOS), gen.sucursales);
 
-// En el POS cualquier rol busca clientes y registra uno nuevo para emitir un CCF.
+// En el POS cualquier rol busca clientes y registra uno nuevo para emitir un CCF;
+// corregir o desactivar un cliente es de admin y gerente.
 router.get('/clientes', permitir(TODOS), gen.listarClientes);
+router.get('/clientes/:id', permitir(TODOS), gen.obtenerCliente);
 router.post('/clientes', permitir(TODOS), requireFields(['nombre']), gen.crearCliente);
+router.put('/clientes/:id', permitir(GESTION), gen.actualizarCliente);
+router.delete('/clientes/:id', permitir(GESTION), gen.desactivarCliente);
 
 router.put('/configuracion', permitir(SOLO_ADMIN), gen.actualizarConfiguracion);
 

@@ -17,16 +17,16 @@ BE-004,3,BE,Angel4091,"Usuarios y accesos: crear, asignar rol y sucursal, desact
 FE-001,4,FE,Angel4091,Pantalla de inicio de sesión con el estilo actual,feature/angel/FE-001,en revisión,,2026-11-18,,"D-13; adelantado a la Fase 3; reasignado del Integrante 6"
 FE-002,4,FE,Angel4091,Sesión y token en api.js; la sesión vencida vuelve al login,feature/angel/FE-001,en revisión,,2026-11-18,,"D-29; adelantado a la Fase 3; reasignado del Integrante 6"
 FE-003,4,FE,Angel4091,Menú y acciones según el rol,feature/angel/FE-001,en revisión,,2026-11-18,,"D-04, D-28; adelantado a la Fase 3; reasignado del Integrante 6"
-FE-004,4,FE,Angel4091,"Módulo Administración: accesos, bitácora y datos de demo",feature/angel/FE-001,en curso,,2026-11-18,,"D-18; Accesos y Datos de demo listos; la pestaña Bitácora espera BE-032 y BE-033 (Fase 5); reasignado del Integrante 6"
+FE-004,4,FE,Angel4091,"Módulo Administración: accesos, bitácora y datos de demo",feature/angel/FE-001,en revisión,,2026-11-18,,"D-18; la pestaña Bitácora llegó en feature/angel/BE-011 con BE-032 y BE-033; reasignado del Integrante 6"
 FE-005,4,FE,Angel4091,Guía rápida con los módulos del rol,feature/angel/FE-001,en revisión,,2026-11-18,,"adelantado a la Fase 3; reasignado del Integrante 6"
-BE-011,5,BE,Integrante 3,IVA incluido en la factura de consumidor final y desglosado en el crédito fiscal,,pendiente,,,,D-14
-BE-013,5,BE,Integrante 3,Quién registró y versión en ventas y compras; 409 al editar productos o insumos con datos viejos,,pendiente,,,,D-19
-BE-022,5,BE,Integrante 4,"CRUD completo de clientes, insumos y proveedores (eliminar es desactivar)",,pendiente,,,,D-05
-BE-032,5,BE,Integrante 5,Bitácora de auditoría y paginación en el servidor,,pendiente,,,,
-BE-033,5,BE,Integrante 5,Consulta de la bitácora con filtros,,pendiente,,,,
-QA-001,1-5,QA,Integrante 7,Pruebas con node:test de servicios y rutas,,pendiente,,,,
-QA-002,5,QA,Integrante 7,Colección de Postman con todos los endpoints,,pendiente,,,,
-QA-003,1-6,QA,Integrante 7,Venta completa y prueba en un clon limpio al cerrar cada fase,,pendiente,,,,D-11
+BE-011,5,BE,Angel4091,IVA incluido en la factura de consumidor final y desglosado en el crédito fiscal,feature/angel/BE-011,en revisión,,2026-11-19,,"D-14; reasignado del Integrante 3"
+BE-013,5,BE,Angel4091,Quién registró y versión en ventas y compras; 409 al editar productos o insumos con datos viejos,feature/angel/BE-011,en revisión,,2026-11-19,,"D-19; reasignado del Integrante 3"
+BE-022,5,BE,Angel4091,"CRUD completo de clientes, insumos y proveedores (eliminar es desactivar)",feature/angel/BE-011,en revisión,,2026-11-19,,"D-05; reasignado del Integrante 4"
+BE-032,5,BE,Angel4091,Bitácora de auditoría y paginación en el servidor,feature/angel/BE-011,en revisión,,2026-11-19,,"D-30, D-31; reasignado del Integrante 5"
+BE-033,5,BE,Angel4091,Consulta de la bitácora con filtros,feature/angel/BE-011,en revisión,,2026-11-19,,"reasignado del Integrante 5"
+QA-001,1-5,QA,Angel4091,Pruebas con node:test de servicios y rutas,feature/angel/BE-011,en revisión,,2026-11-18,,"75 pruebas (ventas, api, planilla, seguridad, reglas); reasignado del Integrante 7"
+QA-002,5,QA,Angel4091,Colección de Postman con todos los endpoints,feature/angel/BE-011,en revisión,,2026-11-19,,"35 peticiones y 42 pruebas; reasignado del Integrante 7"
+QA-003,1-6,QA,Angel4091,Venta completa y prueba en un clon limpio al cerrar cada fase,,en curso,,2026-11-18,,"D-11; hecho en las fases 2, 3 y 5; falta la 6; reasignado del Integrante 7"
 OP-002,6,OP,Integrante 8,deploy/nginx.conf con proxy inverso y HTTPS,,pendiente,,,,D-12
 DOC-001,7,DOC,Integrante 8,"Arquitectura (Mermaid), endpoints, manual de usuario, requisitos técnicos y uso de IA",,pendiente,,,,
 DOC-002,7,DOC,Integrante 8,Guía de defensa,,pendiente,,,,

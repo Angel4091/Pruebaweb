@@ -7,7 +7,10 @@ export const crear = async (req, res) => {
   res.status(201).location(`/api/ventas/${venta.id}`).json(venta);
 };
 
-/** GET /api/ventas?sucursalId=&fecha=&tipoComprobante=&limite= (fuera del admin, siempre su sucursal) */
+/**
+ * GET /api/ventas?sucursalId=&desde=&hasta=&tipoComprobante=&estado=&pagina=&porPagina=
+ * Responde { datos, total, pagina, porPagina, paginas }. Fuera del admin, siempre su sucursal.
+ */
 export const listar = async (req, res) => res.json(await ventas.listarVentas({ ...req.query, sucursalId: sucursalDe(req) }));
 
 /** GET /api/ventas/:id */

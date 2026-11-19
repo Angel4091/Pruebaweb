@@ -8,10 +8,10 @@ const STOCK_POR_SUCURSAL = `
   (select coalesce(json_object_agg(x.sucursal_id, x.cantidad), '{}'::json)
    from existencias x where x.insumo_id = i.id) as stock`;
 
-const COLUMNAS_INSUMO = `i.id, i.nombre, i.unidad, i.stock_minimo, i.costo_unitario, i.proveedor_id, i.arte, i.version, ${STOCK_POR_SUCURSAL}`;
+const COLUMNAS_INSUMO = `i.id, i.nombre, i.unidad, i.stock_minimo, i.costo_unitario, i.proveedor_id, i.arte, i.activo, i.version, ${STOCK_POR_SUCURSAL}`;
 
-/** Insumos activos con su existencia en la sucursal y el nombre del proveedor. */
-export async function listarInsumos(sucursalId, db = pool) {
+/** Insumos con su existencia en la sucursal y el nombre del proveedor. activo: true, false o null (todos). */
+export async function listarInsumos(sucursalId, { activo = true } = {}, db = pool) {
   const sql = `
     select ${COLUMNAS_INSUMO},
            coalesce(e.cantidad, 0) as existencia,
@@ -19,9 +19,9 @@ export async function listarInsumos(sucursalId, db = pool) {
     from insumos i
     left join existencias e on e.insumo_id = i.id and e.sucursal_id = $1
     left join proveedores p on p.id = i.proveedor_id
-    where i.activo
+    where ($2::boolean is null or i.activo = $2)
     order by i.orden`;
-  return todas(await db.query(sql, [sucursalId]));
+  return todas(await db.query(sql, [sucursalId, activo]));
 }
 
 /** Datos mínimos de cada insumo para calcular costos y disponibilidad de recetas. */
@@ -57,15 +57,30 @@ export async function crearInsumo(ins, db) {
   return obtenerInsumo(ins.id, db);
 }
 
-export async function guardarInsumo(ins, db = pool) {
-  await db.query(
+/**
+ * Guarda el insumo solo si sigue en la versión que se leyó (bloqueo optimista, D-19).
+ * Devuelve null si alguien lo modificó antes: el servicio responde 409.
+ */
+export async function guardarInsumo(ins, versionLeida, db = pool) {
+  const resultado = await db.query(
     `update insumos
-     set nombre = $2, unidad = $3, stock_minimo = $4, costo_unitario = $5, proveedor_id = $6,
+     set nombre = $2, unidad = $3, stock_minimo = $4, costo_unitario = $5, proveedor_id = $6, activo = $7,
          version = version + 1, actualizado_en = now()
-     where id = $1`,
-    [ins.id, ins.nombre, ins.unidad, ins.stockMinimo, ins.costoUnitario, ins.proveedorId ?? null],
+     where id = $1 and version = $8`,
+    [ins.id, ins.nombre, ins.unidad, ins.stockMinimo, ins.costoUnitario, ins.proveedorId ?? null, ins.activo, versionLeida],
   );
-  return obtenerInsumo(ins.id, db);
+  return resultado.rowCount > 0 ? obtenerInsumo(ins.id, db) : null;
+}
+
+/** Productos activos cuya receta usa el insumo (no se puede desactivar mientras los haya). */
+export async function productosQueUsan(insumoId, db = pool) {
+  const sql = `
+    select p.id, p.nombre
+    from recetas r
+    join productos p on p.id = r.producto_id
+    where r.insumo_id = $1 and p.activo
+    order by p.orden`;
+  return todas(await db.query(sql, [insumoId]));
 }
 
 export async function actualizarCosto(id, costoUnitario, db) {

@@ -9,6 +9,7 @@ const router = Router();
 router.get('/insumos', permitir(TODOS), conSucursal, inv.listarInsumos);
 router.post('/insumos', permitir(GESTION), requireFields(['nombre', 'unidad', 'stockMinimo', 'costoUnitario']), inv.crearInsumo);
 router.put('/insumos/:id', permitir(GESTION), inv.actualizarInsumo);
+router.delete('/insumos/:id', permitir(GESTION), inv.desactivarInsumo);
 
 router.get('/inventario/resumen', permitir(TODOS), conSucursal, inv.resumen);
 router.get('/inventario/alertas', permitir(TODOS), conSucursal, inv.alertas);

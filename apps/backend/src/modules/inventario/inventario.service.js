@@ -1,5 +1,5 @@
 import { usarTransaccion, withTransaction } from '../../config/database.js';
-import { AppError, notFound } from '../../utils/AppError.js';
+import { AppError, notFound, registroDesactualizado } from '../../utils/AppError.js';
 import { round2, round4 } from '../../utils/money.js';
 import { newId } from '../../utils/ids.js';
 import { validarSucursal } from '../general/general.service.js';
@@ -25,10 +25,10 @@ function aInsumoConEstado(fila) {
   };
 }
 
-/** Lista los insumos con su existencia, estado y valor para una sucursal. */
-export async function listarInsumos(sucursalId) {
+/** Lista los insumos con su existencia, estado y valor para una sucursal (activo: true, false o null = todos). */
+export async function listarInsumos(sucursalId, { activo = true } = {}) {
   await validarSucursal(sucursalId);
-  const filas = await repo.listarInsumos(sucursalId);
+  const filas = await repo.listarInsumos(sucursalId, { activo });
   return filas.map(aInsumoConEstado);
 }
 
@@ -73,8 +73,27 @@ export async function actualizarInsumo(id, data) {
     insumo[key] = numericos.includes(key) ? Number(data[key]) : data[key];
   }
   if (!UNIDADES.includes(insumo.unidad)) throw new AppError('La unidad debe ser kg, lt o und', 422);
-  return repo.guardarInsumo(insumo);
+
+  if (data.activo !== undefined) {
+    // Un insumo que está en la receta de un platillo activo no se puede desactivar: ese platillo ya no se podría vender.
+    if (!data.activo && insumo.activo) {
+      const enUso = await repo.productosQueUsan(id);
+      if (enUso.length > 0) {
+        throw new AppError(`No se puede desactivar: lo usan ${enUso.map((p) => p.nombre).join(', ')}. Quítalo primero de esas recetas.`, 409);
+      }
+    }
+    insumo.activo = Boolean(data.activo);
+  }
+
+  // Si el cliente manda la versión que tenía en pantalla, se compara contra esa (D-19).
+  const versionLeida = data.version !== undefined ? Number(data.version) : insumo.version;
+  const guardado = await repo.guardarInsumo(insumo, versionLeida);
+  if (!guardado) throw registroDesactualizado('insumo');
+  return guardado;
 }
+
+/** Baja lógica: el insumo deja de aparecer en Inventario y Compras, pero conserva su historial. */
+export const desactivarInsumo = (id) => actualizarInsumo(id, { activo: false });
 
 /**
  * Registra una entrada de inventario y recalcula el costo promedio ponderado:

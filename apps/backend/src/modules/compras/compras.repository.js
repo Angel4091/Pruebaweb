@@ -3,10 +3,12 @@ import { unaFila, todas } from '../../utils/filas.js';
 
 /* ---------- Proveedores ---------- */
 
-const COLUMNAS_PROVEEDOR = 'id, nombre, nit, nrc, telefono, correo, contacto, dias_credito';
+const COLUMNAS_PROVEEDOR = 'id, nombre, nit, nrc, telefono, correo, contacto, dias_credito, activo';
 
-export async function listarProveedores(db = pool) {
-  return todas(await db.query(`select ${COLUMNAS_PROVEEDOR} from proveedores where activo order by orden`));
+/** Proveedores. activo: true (por defecto), false o null (todos). */
+export async function listarProveedores({ activo = true } = {}, db = pool) {
+  const sql = `select ${COLUMNAS_PROVEEDOR} from proveedores where ($1::boolean is null or activo = $1) order by orden`;
+  return todas(await db.query(sql, [activo]));
 }
 
 export async function obtenerProveedor(id, db = pool) {
@@ -30,10 +32,11 @@ export async function crearProveedor(p, db = pool) {
 export async function guardarProveedor(p, db = pool) {
   const sql = `
     update proveedores
-    set nombre = $2, nit = $3, nrc = $4, telefono = $5, correo = $6, contacto = $7, dias_credito = $8, actualizado_en = now()
+    set nombre = $2, nit = $3, nrc = $4, telefono = $5, correo = $6, contacto = $7, dias_credito = $8, activo = $9,
+        actualizado_en = now()
     where id = $1
     returning ${COLUMNAS_PROVEEDOR}`;
-  return unaFila(await db.query(sql, [p.id, p.nombre, p.nit, p.nrc, p.telefono, p.correo, p.contacto, p.diasCredito]));
+  return unaFila(await db.query(sql, [p.id, p.nombre, p.nit, p.nrc, p.telefono, p.correo, p.contacto, p.diasCredito, p.activo]));
 }
 
 export async function contarProveedores(db = pool) {
@@ -45,7 +48,8 @@ export async function contarProveedores(db = pool) {
 
 const SELECT_COMPRA = `
   select c.id, c.numero_factura, c.proveedor_id, c.proveedor_nombre, c.sucursal_id, c.tipo, c.descripcion, c.fecha,
-         c.subtotal, c.iva, c.total, c.condicion, c.orden_compra_id, c.version,
+         c.subtotal, c.iva, c.total, c.condicion, c.orden_compra_id, c.creado_por, c.version,
+         (select u.nombre from usuarios u where u.id = c.creado_por) as registrado_por,
          coalesce((select json_agg(json_build_object(
                     'insumo_id', d.insumo_id, 'nombre', d.nombre, 'cantidad', d.cantidad,
                     'costo_unitario', d.costo_unitario, 'total', d.total) order by d.id)
@@ -67,10 +71,10 @@ export async function siguienteNumeroCompra(db) {
 export async function insertarCompra(c, db) {
   await db.query(
     `insert into compras (id, numero_factura, proveedor_id, proveedor_nombre, sucursal_id, tipo, descripcion, fecha,
-                          subtotal, iva, total, condicion, orden_compra_id)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+                          subtotal, iva, total, condicion, orden_compra_id, creado_por)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
     [c.id, c.numeroFactura, c.proveedorId, c.proveedorNombre, c.sucursalId, c.tipo, c.descripcion, c.fecha,
-      c.subtotal, c.iva, c.total, c.condicion, c.ordenCompraId],
+      c.subtotal, c.iva, c.total, c.condicion, c.ordenCompraId, c.creadoPor ?? null],
   );
   await insertarFilas(db, 'compra_detalles', ['compra_id', 'insumo_id', 'nombre', 'cantidad', 'costo_unitario', 'total'],
     c.items.map((i) => [c.id, i.insumoId, i.nombre, i.cantidad, i.costoUnitario, i.total]));
@@ -80,11 +84,23 @@ export async function obtenerCompra(id, db = pool) {
   return unaFila(await db.query(`${SELECT_COMPRA} where c.id = $1`, [id]));
 }
 
-export async function listarCompras({ sucursalId, tipo } = {}, db = pool) {
-  const sql = `${SELECT_COMPRA}
-    where ($1::text is null or c.sucursal_id = $1) and ($2::text is null or c.tipo = $2)
-    order by c.fecha desc, c.id desc`;
-  return todas(await db.query(sql, [sucursalId || null, tipo || null]));
+// Filtros del historial de compras; un parámetro nulo no filtra.
+const FILTRO_COMPRAS = `
+  where ($1::text is null or c.sucursal_id = $1)
+    and ($2::text is null or c.tipo = $2)
+    and ($3::timestamptz is null or c.fecha >= $3)
+    and ($4::timestamptz is null or c.fecha < $4)
+    and ($5::text is null or c.proveedor_id = $5)`;
+
+/** Una página del historial de compras (de la más reciente a la más antigua) y cuántas cumplen los filtros. */
+export async function listarCompras({ sucursalId, tipo, desde, hasta, proveedorId } = {}, { limite, desplazamiento }, db = pool) {
+  const filtros = [sucursalId || null, tipo || null, desde ?? null, hasta ?? null, proveedorId || null];
+  const conteo = await db.query(`select count(*) as total from compras c ${FILTRO_COMPRAS}`, filtros);
+  const pagina = await db.query(
+    `${SELECT_COMPRA} ${FILTRO_COMPRAS} order by c.fecha desc, c.id desc limit $6 offset $7`,
+    [...filtros, limite, desplazamiento],
+  );
+  return { filas: todas(pagina), total: conteo.rows[0].total };
 }
 
 /** Total de compras de insumos (costo) y de gastos en un rango de fechas. */

@@ -11,13 +11,14 @@ const SELECT_PRODUCTO = `
           from existencias_reventa x where x.producto_id = p.id) as stock
   from productos p`;
 
-export async function listarProductos({ categoriaId, texto, incluirInactivos = false } = {}, db = pool) {
+/** Productos del menú. activo: true (por defecto), false o null (todos). */
+export async function listarProductos({ categoriaId, texto, activo = true } = {}, db = pool) {
   const sql = `${SELECT_PRODUCTO}
-    where ($1::boolean or p.activo)
+    where ($1::boolean is null or p.activo = $1)
       and ($2::text is null or p.categoria_id = $2)
       and ($3::text is null or strpos(lower(p.nombre), $3) > 0)
     order by p.orden`;
-  return todas(await db.query(sql, [incluirInactivos, categoriaId || null, texto || null]));
+  return todas(await db.query(sql, [activo, categoriaId || null, texto || null]));
 }
 
 export async function obtenerProducto(id, db = pool) {
@@ -37,14 +38,19 @@ export async function crearProducto(p, db) {
   );
 }
 
-export async function guardarProducto(p, db) {
-  await db.query(
+/**
+ * Guarda el producto solo si sigue en la versión que se leyó (bloqueo optimista, D-19).
+ * Devuelve false si alguien lo modificó antes: el servicio responde 409.
+ */
+export async function guardarProducto(p, versionLeida, db) {
+  const resultado = await db.query(
     `update productos
      set nombre = $2, precio = $3, categoria_id = $4, descripcion = $5, imagen = $6, activo = $7,
          costo = $8, stock_minimo = $9, version = version + 1, actualizado_en = now()
-     where id = $1`,
-    [p.id, p.nombre, p.precio, p.categoriaId, p.descripcion, p.imagen, p.activo, p.costo ?? 0, p.stockMinimo ?? 0],
+     where id = $1 and version = $10`,
+    [p.id, p.nombre, p.precio, p.categoriaId, p.descripcion, p.imagen, p.activo, p.costo ?? 0, p.stockMinimo ?? 0, versionLeida],
   );
+  return resultado.rowCount > 0;
 }
 
 /** Reemplaza la receta completa de un producto elaborado. */

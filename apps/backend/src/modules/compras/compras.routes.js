@@ -11,8 +11,10 @@ const cuentaPropia = deSuSucursal((req) => sucursalDeCuenta(req.params.id));
 
 // Inventario muestra los proveedores al registrar una entrada; el resto es de gestión.
 router.get('/proveedores', permitir(TODOS), compras.listarProveedores);
+router.get('/proveedores/:id', permitir(TODOS), compras.obtenerProveedor);
 router.post('/proveedores', permitir(GESTION), requireFields(['nombre']), compras.crearProveedor);
 router.put('/proveedores/:id', permitir(GESTION), compras.actualizarProveedor);
+router.delete('/proveedores/:id', permitir(GESTION), compras.desactivarProveedor);
 
 router.get('/compras', permitir(GESTION), compras.listarCompras);
 router.get('/compras/resumen', permitir(GESTION), compras.resumen);

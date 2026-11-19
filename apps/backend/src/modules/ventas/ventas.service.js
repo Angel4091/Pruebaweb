@@ -1,8 +1,8 @@
 import { pool, withTransaction } from '../../config/database.js';
 import { AppError, notFound } from '../../utils/AppError.js';
-import { round2, IVA_RATE } from '../../utils/money.js';
+import { round2, desglosarIva } from '../../utils/money.js';
 import { newId } from '../../utils/ids.js';
-import { rangoDelDia } from '../../utils/dates.js';
+import { leerPaginacion, leerRangoFechas, paginado } from '../../utils/filtros.js';
 import { calcularRequerimientos, validarExistencias, aplicarConsumo } from '../inventario/inventario.service.js';
 import { obtenerCaja, METODOS_PAGO } from '../caja/caja.service.js';
 import { obtenerCliente } from '../general/general.service.js';
@@ -14,11 +14,14 @@ import * as productosRepo from '../productos/productos.repository.js';
 export const TIPOS_COMPROBANTE = ['FCF', 'CCF'];
 export const TIPOS_ORDEN = ['comer_aqui', 'para_llevar', 'delivery'];
 
-/** Calcula subtotal, IVA (13 %) y total de una lista de items. */
+/**
+ * Totales de la venta. Los precios del menú ya incluyen el IVA (D-14): el cliente paga
+ * la suma de las líneas, y de ahí se separan el valor sin IVA (subtotal) y el 13 %.
+ * La factura de consumidor final muestra el total con el IVA incluido; el crédito fiscal,
+ * el subtotal, el IVA y el total. En ambos casos el total es el mismo.
+ */
 export function calcularTotales(items) {
-  const subtotal = round2(items.reduce((a, it) => a + it.cantidad * it.precioUnitario, 0));
-  const iva = round2(subtotal * IVA_RATE);
-  return { subtotal, iva, total: round2(subtotal + iva) };
+  return desglosarIva(items.map((it) => round2(it.cantidad * it.precioUnitario)));
 }
 
 /** Número de comprobante con el formato "CCF-01-000045". */
@@ -80,6 +83,7 @@ export async function crearVenta(data, usuario = null) {
     if (!METODOS_PAGO.includes(metodoPago)) throw new AppError('Método de pago inválido', 422);
 
     const cliente = await obtenerCliente(clienteId, client);
+    if (!cliente.activo) throw new AppError(`El cliente ${cliente.nombre} está desactivado`, 422);
     if (tipoComprobante === 'CCF' && (!cliente.nit || !cliente.nrc)) {
       throw new AppError('El Comprobante de Crédito Fiscal requiere un cliente con NIT y NRC', 422);
     }
@@ -138,9 +142,17 @@ export async function obtenerVenta(id) {
   return detalleVenta(venta);
 }
 
-export async function listarVentas({ sucursalId, fecha, tipoComprobante, limite = 100 } = {}) {
-  const rango = fecha ? rangoDelDia(fecha) : {};
-  return repo.listarVentas({ sucursalId, ...rango, tipoComprobante, limite: Math.min(Number(limite) || 100, 500) });
+/**
+ * Ventas paginadas en el servidor. Filtros: sucursal, rango de fechas (?desde=&hasta=,
+ * o ?fecha= para un solo día), tipo de comprobante y estado (emitida o anulada).
+ */
+export async function listarVentas({ sucursalId, fecha, desde, hasta, tipoComprobante, estado, pagina, porPagina } = {}) {
+  if (tipoComprobante && !TIPOS_COMPROBANTE.includes(tipoComprobante)) throw new AppError('tipoComprobante debe ser FCF o CCF', 400);
+  if (estado && !['emitida', 'anulada'].includes(estado)) throw new AppError('estado debe ser emitida o anulada', 400);
+  const rango = leerRangoFechas(fecha ? { desde: fecha, hasta: fecha } : { desde, hasta });
+  const paginacion = leerPaginacion({ pagina, porPagina });
+  const { filas, total } = await repo.listarVentas({ sucursalId, ...rango, tipoComprobante, estado }, paginacion);
+  return paginado(filas, total, paginacion);
 }
 
 /** Anula una venta del turno abierto y devuelve los insumos al inventario. */

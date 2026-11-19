@@ -47,11 +47,11 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
 
 1. Elige el tipo de orden: **Comer aquí**, **Para llevar** o **Delivery**.
 2. Toca los platillos para agregarlos. Usa el buscador o el filtro de categorías. La etiqueta *Quedan N* avisa cuando quedan pocos según el inventario; *Agotado* bloquea el producto.
-3. En el carrito ajusta cantidades con − / + o quita productos con ✕. Se calculan subtotal, IVA 13 % y total.
+3. En el carrito ajusta cantidades con − / + o quita productos con ✕. Los precios del menú ya incluyen el IVA: el total es la suma de la orden, y debajo se ve el valor sin IVA y el 13 % incluido.
 4. **Tipo de comprobante:** *Factura* (consumidor final) o *Crédito fiscal (CCF)*. El CCF exige seleccionar un cliente contribuyente con NIT y NRC; puedes crearlo con el botón **+** junto a *Cliente*.
 5. **Método de pago:** Efectivo, Tarjeta o Bitcoin (Chivo).
 6. Toca **Cobrar**. En efectivo, escribe el monto recibido (o usa los botones rápidos) y verifica el cambio. En tarjeta o Chivo puedes anotar la referencia.
-7. Toca **Confirmar venta**. Se muestra el comprobante con su correlativo (por ejemplo `FCF-01-000824`), listo para **Imprimir**.
+7. Toca **Confirmar venta**. Se muestra el comprobante con su correlativo (por ejemplo `FCF-01-000824`) y el nombre de quien atendió, listo para **Imprimir**. La factura muestra el total con el IVA incluido; el crédito fiscal muestra cada línea sin IVA, el 13 % y el total.
 
 > Si la caja está cerrada, el POS lo indica y el botón Cobrar se bloquea hasta abrirla.
 
@@ -64,7 +64,8 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
   - **Nuevo insumo** agrega un insumo al catálogo.
 - **Receta del platillo:** elige un platillo para ver sus ingredientes, cantidades, costo por platillo y margen.
 - **Registrar entrada:** suma existencias de un insumo o de un producto empacado (por ejemplo, un ajuste o una donación). Para compras con factura usa el módulo Compras.
-- **Ver recetas:** lista todos los platillos con su costo y margen, y permite crear un **Nuevo platillo** con su receta.
+- **Ver recetas:** lista todos los platillos con su costo y margen (calculado sobre el precio sin IVA), y permite crear un **Nuevo platillo** con su receta.
+- **Editar o desactivar un insumo** (administrador y gerente): toca ✏️. **Desactivar** lo quita del inventario, salvo que lo use la receta de un platillo activo. Si otra persona guardó cambios en ese insumo mientras lo editabas, el sistema te avisa para que lo vuelvas a abrir.
 
 ## 4. Compras y proveedores
 
@@ -73,6 +74,7 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
 3. Para insumos, agrega líneas con insumo, cantidad y costo unitario. Para gastos, escribe el monto y la descripción.
 4. Toca **Registrar factura**. Las compras de insumos aumentan el inventario de la sucursal y actualizan el costo promedio. Si la condición es *Crédito*, se crea una cuenta por pagar.
 - **Cuentas por pagar:** toca **Pagar** para registrar un pago total o un abono.
+- **Historial:** compras y gastos de la sucursal de 10 en 10, con quién registró cada factura (en pantallas anchas).
 - **Órdenes de compra pendientes:** las genera el módulo Pronóstico. Toca **Recibir** para cargar la orden en el formulario y registrarla al llegar la factura.
 
 ## 5. RR. HH. y planilla
@@ -105,4 +107,5 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
   - ✏️ cambia los datos, el rol, la sucursal o la contraseña (déjala en blanco para no cambiarla).
   - 👤✕ quita el acceso: la persona ya no puede entrar y, si tenía la sesión abierta, se cierra en su siguiente acción. 👤✓ se lo devuelve.
   - Nadie puede quitarse el acceso ni el rol de administrador a sí mismo, y siempre queda al menos un administrador activo.
+- **Bitácora:** quién cambió qué y cuándo (ventas, anulaciones, aperturas y cierres de caja, compras, pagos, cambios de menú, inventario, usuarios e inicios de sesión). Filtra por usuario, módulo y fechas; se muestra de 12 en 12.
 - **Datos de demostración:** **Restablecer datos de demostración** borra lo registrado y vuelve a cargar el menú, el inventario y 14 días de ventas de ejemplo. Pide confirmación y no está disponible en producción.

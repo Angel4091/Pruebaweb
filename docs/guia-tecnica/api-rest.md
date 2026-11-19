@@ -6,11 +6,11 @@ Base: `http://localhost:3000/api` · Formato: JSON · Errores: `{ "error": "mens
 |---|---|
 | 200 | Consulta o actualización correcta |
 | 201 | Recurso creado (POST) |
-| 400 | Parámetro faltante o JSON inválido |
+| 400 | Falta un campo o parámetro, un filtro no es válido o el JSON está mal formado |
 | 401 | Sin sesión, token inválido o vencido, o credenciales incorrectas |
 | 403 | El rol no tiene permiso o la sucursal no es la del usuario |
 | 404 | Recurso o ruta inexistente |
-| 409 | Conflicto de negocio (caja cerrada, stock insuficiente, planilla duplicada, registro repetido) |
+| 409 | Conflicto de negocio (caja cerrada, stock insuficiente, planilla duplicada, registro repetido) o alguien más modificó el registro (versión vieja) |
 | 413 | Petición o imagen demasiado grande |
 | 422 | Datos inválidos (validaciones o reglas de la base de datos) |
 | 429 | Demasiadas peticiones (300 por minuto; 10 intentos fallidos de login cada 15 minutos) |
@@ -45,7 +45,34 @@ Solo `/salud`, `GET /configuracion`, `/configuracion/fuentes` y `POST /auth/logi
 | Empleados y planilla (consultar) | sí | su sucursal | no | no |
 | Planilla: generar y pagar | sí | no | no | no |
 | Pronóstico | sí | sí | no | no |
-| Configuración (modificar), usuarios y reinicio de datos | sí | no | no | no |
+| Clientes: consultar y crear | sí | sí | sí | sí |
+| Clientes: editar y desactivar | sí | sí | no | no |
+| Configuración (modificar), usuarios, bitácora y reinicio de datos | sí | no | no | no |
+
+## Filtros y paginación
+
+| Parámetro | Dónde | Valores |
+|---|---|---|
+| `?activo=` | productos, insumos, clientes, proveedores | `true` (por defecto, solo activos), `false` (solo desactivados) o `todos` |
+| `?desde=&hasta=` | ventas, compras, bitácora | fechas `AAAA-MM-DD`; ambos días incluidos |
+| `?pagina=&porPagina=` | ventas, compras, bitácora | página desde 1; 20 por página por defecto y 100 como máximo |
+
+Los listados paginados responden:
+
+```json
+{ "datos": [ … ], "total": 1370, "pagina": 2, "porPagina": 20, "paginas": 69 }
+```
+
+Un valor que no tiene sentido (`?pagina=0`, `?activo=quizas`, `desde` posterior a `hasta`) responde 400.
+
+## Versión de los registros (D-19)
+
+Productos e insumos traen `version`. Al editar, envía la versión que tenías en pantalla: si otra persona guardó cambios antes, la API responde **409** y no sobrescribe nada.
+
+```json
+PUT /api/insumos/ins-queso
+{ "stockMinimo": 6, "version": 3 }
+```
 
 ## Usuarios (solo admin)
 
@@ -67,7 +94,9 @@ La contraseña debe tener entre 12 y 72 caracteres y se guarda con bcrypt. El ad
 | GET | `/dashboard?sucursalId=` | Indicadores del tablero |
 | GET | `/notificaciones?sucursalId=` | Alertas de stock y pagos próximos |
 | GET | `/buscar?q=` | Búsqueda global |
-| GET, POST | `/clientes` | Listar (`?q=`) / crear cliente |
+| GET, POST | `/clientes` | Listar (`?q=&activo=`) / crear cliente |
+| GET, PUT | `/clientes/:id` | Obtener / editar cliente |
+| DELETE | `/clientes/:id` | Desactivar (409 para "Consumidor final") |
 | GET, PUT | `/configuracion` | Identidad visual (GET es público; PUT solo admin) |
 | GET | `/configuracion/fuentes` | Tipografías disponibles |
 | POST | `/sistema/reiniciar` | Restablece los datos de demostración (solo admin; no existe en producción) |
@@ -76,8 +105,8 @@ La contraseña debe tener entre 12 y 72 caracteres y se guarda con bcrypt. El ad
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/ventas?sucursalId=&fecha=&tipoComprobante=&limite=` | Listar ventas |
-| GET | `/ventas/:id` | Comprobante con cliente, sucursal y caja |
+| GET | `/ventas?sucursalId=&desde=&hasta=&tipoComprobante=&estado=&pagina=&porPagina=` | Ventas paginadas (`?fecha=` filtra un solo día) |
+| GET | `/ventas/:id` | Comprobante con cliente, sucursal, caja y quién atendió (`atendio`) |
 | POST | `/ventas` | Registrar venta |
 | PATCH | `/ventas/:id/anular` | Anular venta del turno abierto |
 
@@ -94,22 +123,25 @@ POST /api/ventas
 }
 ```
 
+**IVA (D-14):** los precios del menú ya incluyen el 13 %. El total es la suma de las líneas; `subtotal` es el valor sin IVA (cada línea ÷ 1.13) e `iva` la diferencia. Un Latte grande de $2.75 se cobra $2.75: $2.43 sin IVA y $0.32 de IVA. La factura de consumidor final muestra el total con el IVA incluido; el crédito fiscal, las líneas sin IVA, el 13 % y el total.
+
 ## Productos, recetas e inventario
 
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/categorias` | Categorías del menú |
-| GET | `/productos?sucursalId=&categoriaId=&q=` | Productos con costo, margen, receta y unidades disponibles |
+| GET | `/productos?sucursalId=&categoriaId=&q=&activo=` | Productos con precio sin IVA, costo, margen, receta y unidades disponibles |
 | GET | `/productos/:id` | Detalle |
 | POST | `/productos` | Crear producto elaborado (con receta) o de reventa |
-| PUT | `/productos/:id` | Actualizar |
+| PUT | `/productos/:id` | Actualizar (con `version`) |
 | DELETE | `/productos/:id` | Baja lógica |
-| GET | `/insumos?sucursalId=` | Insumos con existencia y estado |
+| GET | `/insumos?sucursalId=&activo=` | Insumos con existencia, estado y versión |
 | POST | `/insumos` | Crear insumo |
-| PUT | `/insumos/:id` | Actualizar insumo |
+| PUT | `/insumos/:id` | Actualizar insumo (con `version`; `activo: true` lo reactiva) |
+| DELETE | `/insumos/:id` | Desactivar (409 si lo usa la receta de un platillo activo) |
 | GET | `/inventario/resumen?sucursalId=` | Tarjetas del módulo |
 | GET | `/inventario/alertas?sucursalId=` | Alertas de stock mínimo |
-| GET | `/inventario/movimientos?sucursalId=&limite=` | Bitácora |
+| GET | `/inventario/movimientos?sucursalId=&limite=` | Movimientos de inventario |
 | POST | `/inventario/entradas` | Entrada de insumo (`insumoId`) o reventa (`productoId`) |
 
 ## Caja
@@ -127,9 +159,10 @@ POST /api/ventas
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET, POST | `/proveedores` | Listar / crear |
-| PUT | `/proveedores/:id` | Actualizar |
-| GET | `/compras?sucursalId=&tipo=` | Historial |
+| GET, POST | `/proveedores` | Listar (`?activo=`) / crear |
+| GET, PUT | `/proveedores/:id` | Obtener / actualizar |
+| DELETE | `/proveedores/:id` | Desactivar (ya no recibe compras) |
+| GET | `/compras?tipo=&proveedorId=&desde=&hasta=&pagina=&porPagina=` | Historial paginado, con quién la registró (`registradoPor`) |
 | GET | `/compras/resumen` | Compras y gastos del mes, saldo por pagar |
 | POST | `/compras` | Registrar factura (costo o gasto) |
 | GET | `/cuentas-por-pagar` | Cuentas con estado calculado |
@@ -154,3 +187,21 @@ POST /api/ventas
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/pronostico?sucursalId=&dias=7` | Resumen, serie, consumo por insumo, alertas y pedidos |
+
+## Bitácora (solo admin)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/bitacora?usuarioId=&entidad=&accion=&desde=&hasta=&pagina=&porPagina=` | Quién cambió qué y cuándo, de lo más reciente a lo más antiguo |
+
+Cada cambio que termina bien (POST, PUT, PATCH o DELETE con respuesta 2xx) y cada inicio de sesión quedan registrados con el usuario, la acción, el módulo, el registro afectado y un resumen de los datos enviados, sin contraseñas ni imágenes.
+
+| Acción | Ejemplo |
+|---|---|
+| `crear`, `actualizar`, `desactivar` | `POST /productos`, `PUT /insumos/:id`, `DELETE /clientes/:id` |
+| La última parte de la ruta | `apertura` y `cierre` de caja, `anular` una venta, `pagar` una cuenta o planilla, `entradas` de inventario, `reiniciar` |
+| `inicio_sesion` | `POST /auth/login` correcto |
+
+## Colección de Postman
+
+[`docs/postman/origenes-sv.postman_collection.json`](../postman/origenes-sv.postman_collection.json) trae 35 peticiones con sus pruebas: login (guarda el token), uso del token, 400, 401, 403, 404 y 409. Antes de correrla escribe tu `SEED_PASSWORD` en la variable `password` de la colección.

@@ -12,6 +12,7 @@ import {
   calcularDetalleEmpleado,
   totalizarPlanilla,
 } from '../../apps/backend/src/utils/planilla.js';
+import { desglosarIva } from '../../apps/backend/src/utils/money.js';
 
 const round2 = (v) => Math.round((Number(v) + Number.EPSILON) * 100) / 100;
 const pad = (n, size = 2) => String(n).padStart(size, '0');
@@ -296,9 +297,8 @@ function generarHistorial(now) {
           const esCCF = random() < 0.12;
           const tipoComprobante = esCCF ? 'CCF' : 'FCF';
           correlativos[suc.id][tipoComprobante] += 1;
-          const subtotal = round2(items.reduce((a, it) => a + it.total, 0));
-          const iva = round2(subtotal * 0.13);
-          const total = round2(subtotal + iva);
+          // Los precios incluyen IVA (D-14): mismo cálculo que una venta del POS.
+          const { subtotal, iva, total } = desglosarIva(items.map((it) => it.total));
           const metodoPago = pickWeighted(random, [['efectivo', 48], ['tarjeta', 37], ['bitcoin', 15]]);
           const recibido = metodoPago === 'efectivo' ? Math.ceil(total) + (random() < 0.4 ? 5 : 0) : total;
           ventas.push({
@@ -365,7 +365,8 @@ function generarCompras(now) {
     const subtotal = round2(items.reduce((a, i) => a + i.total, 0));
     const iva = round2(subtotal * 0.13);
     return {
-      id, numeroFactura, proveedorId, sucursalId: 'suc-central', tipo: 'costo', descripcion: 'Compra de insumos',
+      id, numeroFactura, proveedorId, proveedorNombre: proveedores.find((p) => p.id === proveedorId)?.nombre ?? '',
+      sucursalId: 'suc-central', tipo: 'costo', descripcion: 'Compra de insumos',
       fecha: dias(offset).toISOString(), items, subtotal, iva, total: round2(subtotal + iva), condicion,
     };
   };

@@ -1,10 +1,13 @@
 import { sucursalDe } from '../../middlewares/roles.js';
+import { leerActivo } from '../../utils/filtros.js';
 import * as inventario from './inventario.service.js';
 import * as productos from '../productos/productos.service.js';
 
-export const listarInsumos = async (req, res) => res.json(await inventario.listarInsumos(req.query.sucursalId));
+export const listarInsumos = async (req, res) =>
+  res.json(await inventario.listarInsumos(req.query.sucursalId, { activo: leerActivo(req.query.activo) }));
 export const crearInsumo = async (req, res) => res.status(201).json(await inventario.crearInsumo(req.body));
 export const actualizarInsumo = async (req, res) => res.json(await inventario.actualizarInsumo(req.params.id, req.body));
+export const desactivarInsumo = async (req, res) => res.json(await inventario.desactivarInsumo(req.params.id));
 export const resumen = async (req, res) => res.json(await inventario.resumenInventario(req.query.sucursalId));
 export const alertas = async (req, res) => res.json(await inventario.alertasStock(req.query.sucursalId));
 export const movimientos = async (req, res) =>

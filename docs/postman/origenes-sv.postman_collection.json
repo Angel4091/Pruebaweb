@@ -1,0 +1,360 @@
+{
+  "info": {
+    "name": "Orígenes SV · API REST",
+    "description": "Colección de la API de Orígenes SV (ERP y POS). Antes de correrla:\n1. Levanta la base y la API (npm run db:up, npm run dev).\n2. En las variables de la colección, escribe en `password` la contraseña SEED_PASSWORD de tu apps/backend/.env (no la guardes en el repositorio).\n3. Corre la carpeta \"1. Autenticación\" primero: el login guarda el token en la variable `token` y las demás peticiones lo envían como Bearer.\n\nCada petición trae una prueba con el código HTTP esperado (200, 201, 400, 401, 403, 404 o 409).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "email", "value": "admin@origenes.test" },
+    { "key": "password", "value": "" },
+    { "key": "token", "value": "" },
+    { "key": "tokenCajero", "value": "" },
+    { "key": "ventaId", "value": "" },
+    { "key": "clienteId", "value": "" },
+    { "key": "versionQueso", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Login (admin) → guarda el token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 con token', () => pm.response.to.have.status(200));",
+            "const datos = pm.response.json();",
+            "pm.collectionVariables.set('token', datos.token);",
+            "pm.test('no devuelve el hash de la contraseña', () => pm.expect(datos.usuario.passwordHash).to.eql(undefined));"
+          ] } }]
+        },
+        {
+          "name": "Login (cajero) → guarda tokenCajero",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"cajero@origenes.test\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('tokenCajero', pm.response.json().token);"
+          ] } }]
+        },
+        {
+          "name": "Login con contraseña incorrecta → 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"no-es-la-clave-123\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Login sin contraseña → 400",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }]
+        },
+        {
+          "name": "Mi sesión (/auth/me)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.test('es el admin', () => pm.expect(pm.response.json().rol).to.eql('admin'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "2. Seguridad (401 y 403)",
+      "item": [
+        {
+          "name": "Sin token → 401",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/productos" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Token inválido → 401",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "esto.no.sirve", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/productos"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('401', () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Cajero intenta ver compras → 403",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenCajero}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/compras"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('403', () => pm.response.to.have.status(403));"] } }]
+        },
+        {
+          "name": "Cajero consulta otra sucursal → 403",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenCajero}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/insumos?sucursalId=suc-sanmiguel"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('403', () => pm.response.to.have.status(403));"] } }]
+        },
+        {
+          "name": "Público: salud de la API",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/salud" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "3. Ventas (POS)",
+      "item": [
+        {
+          "name": "Registrar venta (cajero) → 201",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{tokenCajero}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cajaId\": \"suc-central-caja-01\",\n  \"tipoComprobante\": \"FCF\",\n  \"metodoPago\": \"efectivo\",\n  \"montoRecibido\": 5,\n  \"items\": [{ \"productoId\": \"prod-latte-grande\", \"cantidad\": 1 }]\n}" },
+            "url": "{{baseUrl}}/ventas"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('201', () => pm.response.to.have.status(201));",
+            "const venta = pm.response.json();",
+            "pm.collectionVariables.set('ventaId', venta.id);",
+            "pm.test('el precio incluye IVA: total = precio del menú', () => pm.expect(venta.total).to.eql(2.75));"
+          ] } }]
+        },
+        {
+          "name": "Venta sin existencias → 409",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cajaId\": \"suc-central-caja-01\",\n  \"items\": [{ \"productoId\": \"prod-latte-grande\", \"cantidad\": 100000 }]\n}" },
+            "url": "{{baseUrl}}/ventas"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409', () => pm.response.to.have.status(409));"] } }]
+        },
+        {
+          "name": "Venta sin productos → 400",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cajaId\": \"suc-central-caja-01\"\n}" },
+            "url": "{{baseUrl}}/ventas"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }]
+        },
+        {
+          "name": "Obtener comprobante",
+          "request": { "method": "GET", "url": "{{baseUrl}}/ventas/{{ventaId}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.test('dice quién atendió', () => pm.expect(typeof pm.response.json().atendio).to.eql('string'));"
+          ] } }]
+        },
+        {
+          "name": "Listar ventas paginadas",
+          "request": { "method": "GET", "url": "{{baseUrl}}/ventas?sucursalId=suc-central&pagina=1&porPagina=5" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.test('5 por página', () => pm.expect(pm.response.json().datos.length).to.eql(5));"
+          ] } }]
+        },
+        {
+          "name": "Anular venta → 200",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"motivo\": \"Prueba desde Postman\"\n}" },
+            "url": "{{baseUrl}}/ventas/{{ventaId}}/anular"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Anular otra vez → 409",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"motivo\": \"Otra vez\"\n}" },
+            "url": "{{baseUrl}}/ventas/{{ventaId}}/anular"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409', () => pm.response.to.have.status(409));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "4. Inventario",
+      "item": [
+        {
+          "name": "Listar insumos → guarda la versión del queso",
+          "request": { "method": "GET", "url": "{{baseUrl}}/insumos?sucursalId=suc-central" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "const queso = pm.response.json().find((i) => i.id === 'ins-queso');",
+            "pm.collectionVariables.set('versionQueso', queso.version);"
+          ] } }]
+        },
+        {
+          "name": "Editar insumo con su versión → 200",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"stockMinimo\": 5,\n  \"version\": {{versionQueso}}\n}" },
+            "url": "{{baseUrl}}/insumos/ins-queso"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Editar con una versión vieja → 409",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"stockMinimo\": 6,\n  \"version\": {{versionQueso}}\n}" },
+            "url": "{{baseUrl}}/insumos/ins-queso"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409', () => pm.response.to.have.status(409));"] } }]
+        },
+        {
+          "name": "Desactivar un insumo que usa una receta → 409",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/insumos/ins-cafe" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409', () => pm.response.to.have.status(409));"] } }]
+        },
+        {
+          "name": "Insumo que no existe → 404",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"stockMinimo\": 1\n}" },
+            "url": "{{baseUrl}}/insumos/ins-no-existe"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404', () => pm.response.to.have.status(404));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "5. Clientes y proveedores",
+      "item": [
+        {
+          "name": "Crear cliente → 201",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Cliente de Postman\",\n  \"telefono\": \"2222-0000\"\n}" },
+            "url": "{{baseUrl}}/clientes"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('201', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('clienteId', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "Editar cliente → 200",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"direccion\": \"Col. Escalón, San Salvador\"\n}" },
+            "url": "{{baseUrl}}/clientes/{{clienteId}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Desactivar cliente → 200",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/clientes/{{clienteId}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.test('queda inactivo', () => pm.expect(pm.response.json().activo).to.eql(false));"
+          ] } }]
+        },
+        {
+          "name": "Desactivar \"Consumidor final\" → 409",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/clientes/cli-cf" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('409', () => pm.response.to.have.status(409));"] } }]
+        },
+        {
+          "name": "Proveedores (activos e inactivos)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/proveedores?activo=todos" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Filtro activo inválido → 400",
+          "request": { "method": "GET", "url": "{{baseUrl}}/proveedores?activo=quizas" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('400', () => pm.response.to.have.status(400));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "6. Compras, caja y planilla",
+      "item": [
+        {
+          "name": "Historial de compras paginado",
+          "request": { "method": "GET", "url": "{{baseUrl}}/compras?pagina=1&porPagina=10" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Registrar gasto → 201",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"numeroFactura\": \"FAC-POSTMAN-{{$timestamp}}\",\n  \"sucursalId\": \"suc-central\",\n  \"tipo\": \"gasto\",\n  \"monto\": 25,\n  \"proveedorNombre\": \"ANDA\",\n  \"descripcion\": \"Servicio de agua\"\n}" },
+            "url": "{{baseUrl}}/compras"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('201', () => pm.response.to.have.status(201));"] } }]
+        },
+        {
+          "name": "Cajas con su turno",
+          "request": { "method": "GET", "url": "{{baseUrl}}/cajas?sucursalId=suc-central" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Vista previa de la planilla",
+          "request": { "method": "GET", "url": "{{baseUrl}}/planillas/calculo" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "7. Administración",
+      "item": [
+        {
+          "name": "Usuarios",
+          "request": { "method": "GET", "url": "{{baseUrl}}/usuarios" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Bitácora de ventas (paginada)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/bitacora?entidad=ventas&porPagina=5" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.test('registró la venta de esta corrida', () => pm.expect(pm.response.json().datos.some((r) => r.entidadId === pm.collectionVariables.get('ventaId'))).to.eql(true));"
+          ] } }]
+        },
+        {
+          "name": "Ruta que no existe → 404",
+          "request": { "method": "GET", "url": "{{baseUrl}}/no-existe" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('404', () => pm.response.to.have.status(404));"] } }]
+        }
+      ]
+    }
+  ]
+}
