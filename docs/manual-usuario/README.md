@@ -4,7 +4,19 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
 
 ## Antes de empezar
 
-- **Sucursal activa:** en la barra superior elige *Sucursal Central* o *Sucursal San Miguel*. Todos los módulos muestran los datos de la sucursal elegida.
+- **Iniciar sesión:** entra con tu correo y tu contraseña. La sesión dura 8 horas y se cierra al cerrar la pestaña. Para salir, toca tus iniciales (arriba a la derecha) y luego **Cerrar sesión**. Si el administrador te quita el acceso o la sesión vence, el sistema vuelve a la pantalla de inicio de sesión y te avisa.
+- **Lo que ve cada rol:**
+
+  | Módulo | Administrador | Gerente | Cajero | Barista |
+  |---|---|---|---|---|
+  | Inicio y Punto de venta | sí | sí | sí | sí |
+  | Inventario y recetas | sí | sí | solo consultar | solo consultar |
+  | Caja | sí | sí | sí | no |
+  | Compras, Personal y Pronóstico | sí | su sucursal | no | no |
+  | Generar y pagar la planilla | sí | no | no | no |
+  | Identidad visual y Administración | sí | no | no | no |
+
+- **Sucursal activa:** el administrador elige *Sucursal Central* o *Sucursal San Miguel* en la barra superior, y todos los módulos muestran los datos de esa sucursal. Los demás roles trabajan siempre con la suya.
 - **Notificaciones (campana):** muestra insumos por agotarse y pagos a proveedores próximos a vencer. Toca una notificación para ir al módulo correspondiente.
 - **Búsqueda:** escribe al menos dos letras para buscar productos, insumos, empleados, proveedores o comprobantes.
 - **Modo claro / oscuro:** botones de sol y luna en la barra superior.
@@ -67,8 +79,8 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
 
 - **Personal:** busca, filtra, agrega (**Agregar empleado**), edita (✏️) o da de baja (🗑) a un empleado. La baja conserva su historial.
 - **Planilla quincenal:** muestra el periodo actual con salarios, ISSS (3 %), AFP (7.25 %), renta y total neto.
-  1. Toca **Generar planilla** para guardarla.
-  2. Al pagar, toca **Marcar como pagada**.
+  1. Toca **Generar planilla** para guardarla (solo el administrador).
+  2. Al pagar, toca **Marcar como pagada** (solo el administrador). El gerente ve la planilla de su sucursal.
   3. **Ver detalle por empleado** abre la planilla completa para imprimir.
 - **Historial de pagos:** planillas anteriores; 👁 abre su detalle.
 
@@ -85,3 +97,12 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
 - Ajusta la **paleta de colores** tocando cada círculo, y las **tipografías**.
 - Activa o desactiva bordes, sombras, animaciones y el modo oscuro predeterminado.
 - La **Vista previa** y toda la aplicación cambian mientras editas. Toca **Guardar cambios** para conservarlos o **Descartar** para volver atrás.
+
+## 8. Administración (solo el administrador)
+
+- **Accesos:** lista de usuarios con su rol, sucursal y estado.
+  - **Nuevo usuario:** nombre, correo, rol, sucursal (el administrador trabaja con todas), empleado vinculado (opcional) y una contraseña de 12 a 72 caracteres.
+  - ✏️ cambia los datos, el rol, la sucursal o la contraseña (déjala en blanco para no cambiarla).
+  - 👤✕ quita el acceso: la persona ya no puede entrar y, si tenía la sesión abierta, se cierra en su siguiente acción. 👤✓ se lo devuelve.
+  - Nadie puede quitarse el acceso ni el rol de administrador a sí mismo, y siempre queda al menos un administrador activo.
+- **Datos de demostración:** **Restablecer datos de demostración** borra lo registrado y vuelve a cargar el menú, el inventario y 14 días de ventas de ejemplo. Pide confirmación y no está disponible en producción.

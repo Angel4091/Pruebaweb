@@ -2,6 +2,18 @@ import { api } from './api.js';
 
 /** Servicios por módulo: cada función devuelve una promesa con la respuesta de la API. */
 
+export const authService = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  yo: () => api.get('/auth/me'),
+};
+
+export const usuariosService = {
+  listar: () => api.get('/usuarios'),
+  crear: (data) => api.post('/usuarios', data),
+  actualizar: (id, data) => api.put(`/usuarios/${id}`, data),
+  desactivar: (id) => api.del(`/usuarios/${id}`),
+};
+
 export const generalService = {
   sucursales: () => api.get('/sucursales'),
   dashboard: (sucursalId) => api.get('/dashboard', { sucursalId }),

@@ -14,11 +14,11 @@ BE-001,3,BE,Angel4091,Módulo auth: login y me con bcrypt y JWT (HS256 con issue
 BE-002,3,BE,Angel4091,"Middlewares de autenticación (401), roles (403) y sucursal",feature/angel/BE-001,en revisión,,2026-11-18,,"D-04, D-28; reasignado del Integrante 2"
 BE-003,3,BE,Angel4091,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",feature/angel/BE-001,en revisión,,2026-11-18,,"D-09, D-20; reasignado del Integrante 2"
 BE-004,3,BE,Angel4091,"Usuarios y accesos: crear, asignar rol y sucursal, desactivar",feature/angel/BE-001,en revisión,,2026-11-18,,"D-18; reasignado del Integrante 2"
-FE-001,4,FE,Integrante 6,Pantalla de inicio de sesión con el estilo actual,,pendiente,,,,D-13
-FE-002,4,FE,Integrante 6,Sesión y token en api.js; la sesión vencida vuelve al login,,pendiente,,,,
-FE-003,4,FE,Integrante 6,Menú y acciones según el rol,,pendiente,,,,D-04
-FE-004,4,FE,Integrante 6,"Módulo Administración: accesos, bitácora y datos de demo",,pendiente,,,,D-18
-FE-005,4,FE,Integrante 6,Guía rápida con los módulos del rol,,pendiente,,,,
+FE-001,4,FE,Angel4091,Pantalla de inicio de sesión con el estilo actual,feature/angel/FE-001,en revisión,,2026-11-18,,"D-13; adelantado a la Fase 3; reasignado del Integrante 6"
+FE-002,4,FE,Angel4091,Sesión y token en api.js; la sesión vencida vuelve al login,feature/angel/FE-001,en revisión,,2026-11-18,,"D-29; adelantado a la Fase 3; reasignado del Integrante 6"
+FE-003,4,FE,Angel4091,Menú y acciones según el rol,feature/angel/FE-001,en revisión,,2026-11-18,,"D-04, D-28; adelantado a la Fase 3; reasignado del Integrante 6"
+FE-004,4,FE,Angel4091,"Módulo Administración: accesos, bitácora y datos de demo",feature/angel/FE-001,en curso,,2026-11-18,,"D-18; Accesos y Datos de demo listos; la pestaña Bitácora espera BE-032 y BE-033 (Fase 5); reasignado del Integrante 6"
+FE-005,4,FE,Angel4091,Guía rápida con los módulos del rol,feature/angel/FE-001,en revisión,,2026-11-18,,"adelantado a la Fase 3; reasignado del Integrante 6"
 BE-011,5,BE,Integrante 3,IVA incluido en la factura de consumidor final y desglosado en el crédito fiscal,,pendiente,,,,D-14
 BE-013,5,BE,Integrante 3,Quién registró y versión en ventas y compras; 409 al editar productos o insumos con datos viejos,,pendiente,,,,D-19
 BE-022,5,BE,Integrante 4,"CRUD completo de clientes, insumos y proveedores (eliminar es desactivar)",,pendiente,,,,D-05

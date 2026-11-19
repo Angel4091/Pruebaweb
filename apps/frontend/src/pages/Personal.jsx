@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Users, CalendarDays, CircleCheck, Wallet, Plus, Search, Pencil, Trash2, FileText, Coins, Printer, History, Eye, HandCoins } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { rrhhService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
@@ -11,6 +12,8 @@ const POR_PAGINA = 5;
 
 export default function Personal() {
   const { notify, sucursales } = useApp();
+  // El gerente revisa la planilla de su sucursal; generarla y pagarla es del admin (D-28).
+  const gestionaPlanilla = useAuth().puede('gestionarPlanilla');
   const [q, setQ] = useState('');
   const [estado, setEstado] = useState('activo');
   const [pagina, setPagina] = useState(1);
@@ -251,17 +254,20 @@ export default function Personal() {
                 </dl>
                 <p className="mt-2 text-xs text-suave">{planilla.totales.empleados} empleados · ISSS con techo de $15 por quincena · Renta según tabla de retención quincenal.</p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {periodo === 'actual' && estadoActual === 'borrador' && (
+                  {gestionaPlanilla && periodo === 'actual' && estadoActual === 'borrador' && (
                     <Button className="py-3 sm:col-span-2" icon={Printer} loading={procesando} onClick={generar}>
                       Generar planilla
                     </Button>
                   )}
-                  {planilla.estado === 'generada' && planilla.id && (
+                  {gestionaPlanilla && planilla.estado === 'generada' && planilla.id && (
                     <Button variante="dorado" className="py-3" icon={HandCoins} loading={procesando} onClick={() => pagar(planilla.id)}>
                       Marcar como pagada
                     </Button>
                   )}
-                  <Button variante="contorno" className={`py-3 ${periodo === 'actual' && estadoActual === 'borrador' ? 'sm:col-span-2' : planilla.estado === 'generada' ? '' : 'sm:col-span-2'}`} icon={Eye} onClick={() => setDetalle(planilla)}>
+                  {!gestionaPlanilla && planilla.estado !== 'pagada' && (
+                    <p className="text-xs text-suave sm:col-span-2">El administrador genera y paga la planilla de toda la empresa; aquí ves la de tu sucursal.</p>
+                  )}
+                  <Button variante="contorno" className={`py-3 ${gestionaPlanilla && planilla.estado === 'generada' && planilla.id ? '' : 'sm:col-span-2'}`} icon={Eye} onClick={() => setDetalle(planilla)}>
                     Ver detalle por empleado
                   </Button>
                 </div>
@@ -297,7 +303,7 @@ export default function Personal() {
 }
 
 function EmpleadoModal({ empleado, onClose, onGuardado }) {
-  const { notify, sucursales } = useApp();
+  const { notify, sucursales, sucursalId } = useApp();
   const { data: cargos } = useFetch(() => rrhhService.cargos(), []);
   const [form, setForm] = useState({});
   const [guardando, setGuardando] = useState(false);
@@ -307,7 +313,7 @@ function EmpleadoModal({ empleado, onClose, onGuardado }) {
       setForm({
         nombre: empleado.nombre ?? '',
         cargo: empleado.cargo ?? 'Mesero',
-        sucursalId: empleado.sucursalId ?? 'suc-central',
+        sucursalId: empleado.sucursalId ?? sucursalId,
         salarioMensual: empleado.salarioMensual ?? 408.8,
         dui: empleado.dui ?? '',
         afp: empleado.afp ?? 'AFP Confía',

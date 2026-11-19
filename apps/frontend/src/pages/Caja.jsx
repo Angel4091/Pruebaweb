@@ -39,7 +39,8 @@ export default function Caja() {
   const abrir = async () => {
     setProcesando(true);
     try {
-      await cajaService.abrir(cajaId, { montoInicial, denominaciones: conteo, responsable: 'Andrea Morales' });
+      // El responsable del turno es quien abre la caja (la API usa el usuario de la sesión).
+      await cajaService.abrir(cajaId, { montoInicial, denominaciones: conteo });
       notify(`${caja.nombre} abierta con ${money(montoInicial)}`);
       setConteo({ 1: 0, 5: 0, 10: 0, 20: 0 });
       refrescar();
