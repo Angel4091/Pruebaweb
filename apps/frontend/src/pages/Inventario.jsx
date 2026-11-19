@@ -340,9 +340,23 @@ function InsumoModal({ abierto, insumo, proveedores, onClose, onGuardado }) {
     setGuardando(true);
     try {
       const data = { ...form, proveedorId: form.proveedorId || null };
-      if (insumo) await inventarioService.actualizarInsumo(insumo.id, data);
+      // La versión que se abrió: si alguien más guardó cambios antes, la API responde 409 (D-19).
+      if (insumo) await inventarioService.actualizarInsumo(insumo.id, { ...data, version: insumo.version });
       else await inventarioService.crearInsumo(data);
       onGuardado(insumo ? `${form.nombre} actualizado` : `${form.nombre} agregado al inventario`);
+    } catch (err) {
+      notify(err.message, 'error');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  // Baja lógica: el insumo deja de aparecer; la API no lo permite si una receta activa lo usa.
+  const desactivar = async () => {
+    setGuardando(true);
+    try {
+      await inventarioService.desactivarInsumo(insumo.id);
+      onGuardado(`${insumo.nombre} ya no aparece en el inventario`);
     } catch (err) {
       notify(err.message, 'error');
     } finally {
@@ -379,7 +393,12 @@ function InsumoModal({ abierto, insumo, proveedores, onClose, onGuardado }) {
             ))}
           </select>
         </Field>
-        <div className="flex justify-end gap-2 sm:col-span-2">
+        <div className="flex flex-wrap justify-end gap-2 sm:col-span-2">
+          {insumo && (
+            <Button variante="fantasma" icon={Trash2} className="mr-auto text-error" disabled={guardando} onClick={desactivar}>
+              Desactivar
+            </Button>
+          )}
           <Button variante="suave" onClick={onClose}>
             Cancelar
           </Button>
@@ -512,7 +531,7 @@ function RecetasModal({ abierto, editar, productos, insumos, onClose, onGuardado
           <Field label="Nombre" className="sm:col-span-2">
             <input className="campo" required value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} />
           </Field>
-          <Field label="Precio de venta (sin IVA)">
+          <Field label="Precio de venta (IVA incluido)">
             <input className="campo" type="number" min="0.01" step="0.01" required value={form.precio} onChange={(e) => setForm((f) => ({ ...f, precio: e.target.value }))} />
           </Field>
           <Field label="Categoría">

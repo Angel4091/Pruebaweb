@@ -7,6 +7,10 @@ export const authService = {
   yo: () => api.get('/auth/me'),
 };
 
+export const bitacoraService = {
+  listar: (params) => api.get('/bitacora', params),
+};
+
 export const usuariosService = {
   listar: () => api.get('/usuarios'),
   crear: (data) => api.post('/usuarios', data),
@@ -43,6 +47,7 @@ export const inventarioService = {
   insumos: (sucursalId) => api.get('/insumos', { sucursalId }),
   crearInsumo: (data) => api.post('/insumos', data),
   actualizarInsumo: (id, data) => api.put(`/insumos/${id}`, data),
+  desactivarInsumo: (id) => api.del(`/insumos/${id}`),
   resumen: (sucursalId) => api.get('/inventario/resumen', { sucursalId }),
   alertas: (sucursalId) => api.get('/inventario/alertas', { sucursalId }),
   movimientos: (sucursalId) => api.get('/inventario/movimientos', { sucursalId, limite: 30 }),
