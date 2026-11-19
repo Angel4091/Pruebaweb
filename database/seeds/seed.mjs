@@ -365,7 +365,8 @@ function generarCompras(now) {
     const subtotal = round2(items.reduce((a, i) => a + i.total, 0));
     const iva = round2(subtotal * 0.13);
     return {
-      id, numeroFactura, proveedorId, sucursalId: 'suc-central', tipo: 'costo', descripcion: 'Compra de insumos',
+      id, numeroFactura, proveedorId, proveedorNombre: proveedores.find((p) => p.id === proveedorId)?.nombre ?? '',
+      sucursalId: 'suc-central', tipo: 'costo', descripcion: 'Compra de insumos',
       fecha: dias(offset).toISOString(), items, subtotal, iva, total: round2(subtotal + iva), condicion,
     };
   };
