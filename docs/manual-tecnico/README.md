@@ -3,18 +3,43 @@
 ## 1. Arquitectura
 
 ```
-┌──────────────────────────┐      HTTP/JSON (REST)      ┌───────────────────────────────┐
-│  Frontend (React + Vite) │  ───────────────────────▶  │  Backend (Express 5)          │
-│  pages → services/api.js │  ◀───────────────────────  │  routes → controllers         │
-│  context, hooks, ui      │        /api/...            │        → services → db (JSON) │
-└──────────────────────────┘                            └───────────────┬───────────────┘
-                                                                        │
-                                                         database/data.json (seeds)
+┌──────────────────────────┐      HTTP/JSON (REST)      ┌────────────────────────────────────┐
+│  Frontend (React + Vite) │  ───────────────────────▶  │  Backend (Express 5)               │
+│  pages → services/api.js │  ◀───────────────────────  │  routes → controller → service     │
+│  context, hooks, ui      │        /api/...            │        → repository (SQL con pg)   │
+└──────────────────────────┘                            └──────────────────┬─────────────────┘
+                                                                           │ pool de conexiones
+                                                                    PostgreSQL 16 (Docker)
 ```
 
 - **Frontend:** SPA en React. Cada módulo es una página (`apps/frontend/src/pages`) cargada con `React.lazy` desde `routes/AppRouter.jsx`. Los datos se piden con `fetch` mediante `services/api.js` (async/await, `try/catch`, errores convertidos a `ApiError`).
-- **Backend:** API REST en Express. Las rutas (`routes/index.js`) llaman a controladores delgados; la lógica de negocio vive en `services/`. Los errores de negocio se lanzan como `AppError` con su código HTTP y el middleware `errorHandler` los responde en JSON.
-- **Persistencia:** `config/db.js` mantiene los datos en memoria y los escribe en `database/data.json` tras cada cambio (escritura atómica con archivo temporal). Si el archivo no existe, se genera con `database/seeds/seed.mjs`.
+- **Backend:** monolito modular en Express. Cada área vive en `apps/backend/src/modules/<modulo>/` con cuatro archivos:
+  - `*.routes.js`: define los endpoints y sus validaciones de entrada.
+  - `*.controller.js`: traduce la petición HTTP a una llamada al servicio y responde el código adecuado.
+  - `*.service.js`: aplica las reglas del negocio y decide qué operaciones van en una transacción.
+  - `*.repository.js`: es el único lugar con SQL; consultas en minúsculas y siempre parametrizadas (`$1`, `$2`…).
+- **Errores:** los de negocio se lanzan como `AppError` con su código HTTP. Los de PostgreSQL (registro duplicado, llave foránea, check) se traducen a 409 o 422 con un mensaje genérico; nunca se envía el texto de la base de datos.
+- **Persistencia:** `config/database.js` crea el pool de `pg` y ofrece `withTransaction`, que hace `begin`, `commit` y `rollback` si algo falla. El esquema está en `database/schema.sql` (`npm run db:init`) y los datos de demo en `database/seeds/seed.mjs` (`npm run db:seed`).
+
+### 1.1 Transacciones
+
+| Operación | Qué se guarda junto | Qué se bloquea |
+|---|---|---|
+| Venta | correlativo, venta, detalle, descuento de inventario y movimientos | turno de la caja, insumos de la receta, correlativo |
+| Anulación | estado de la venta y devolución de insumos | la venta |
+| Compra | compra, detalle, entradas de inventario con costo promedio, cuenta por pagar y orden recibida | cada insumo comprado |
+| Cierre de caja | totales por método, efectivo contado y diferencia | el turno |
+| Planilla | planilla y su detalle por empleado | — (la quincena es única en la tabla) |
+| Abono a proveedor | pago y nuevo saldo | la cuenta por pagar |
+
+Los bloqueos (`select ... for update`) evitan que dos cajas vendan el último insumo al mismo tiempo o que se emitan dos comprobantes con el mismo número. Las filas se bloquean siempre en el mismo orden (por id) para no generar bloqueos cruzados.
+
+### 1.2 Reglas que también cuida la base de datos
+
+- Las existencias nunca quedan en negativo (`check (cantidad >= 0)`).
+- Una caja no puede tener dos turnos abiertos (índice único parcial `turnos_un_abierto_por_caja_uidx`).
+- Un CCF solo se emite a un cliente contribuyente con NIT y NRC (`clientes_contribuyente_check`).
+- La misma factura no se registra dos veces para un proveedor, ni la misma quincena dos veces.
 
 ## 2. Lógica de negocio principal
 
@@ -99,13 +124,14 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 | Componentes y Tailwind | `components/ui`, `components/layout` |
 | Enrutador | `routes/AppRouter.jsx` (React Router 7) |
 | Promesas y asincronía | `services/api.js`, `Promise.all` en `AppContext.jsx` |
-| Patrón REST y HTTP | `apps/backend/src/routes/index.js` (GET, POST, PUT, PATCH, DELETE; 200, 201, 400, 404, 409, 422, 500) |
+| Patrón REST y HTTP | `apps/backend/src/modules/*/*.routes.js` (GET, POST, PUT, PATCH, DELETE; 200, 201, 400, 404, 409, 413, 422, 500, 503) |
 | try/catch y manejo de errores | `api.js`, páginas (`try/catch` en cada acción), `middlewares/errorHandler.js` |
 
 ## 5. Despliegue
 
-1. `npm run build` genera `apps/frontend/dist`.
-2. Sirve `apps/frontend/dist` con NginX o Apache y redirige `/api` al backend (`npm start`, puerto 3000).
+1. Crea la base en el servidor y aplica `npm run db:init` (y `npm run db:seed` si quieres datos de demo) con las variables de producción en `apps/backend/.env`.
+2. `npm run build` genera `apps/frontend/dist`.
+3. Sirve `apps/frontend/dist` con NginX o Apache y redirige `/api` al backend (`npm start`, puerto 3000).
 
 Ejemplo de NginX:
 
@@ -120,6 +146,8 @@ server {
 
 ## 6. Pruebas
 
-`npm test` ejecuta `apps/backend/tests` con `node:test`, usando un archivo de datos temporal:
+`npm test` ejecuta `apps/backend/tests` con `node:test` contra la base `origenes_test` (separada de la de desarrollo), que se vuelve a crear con los datos de demo antes de cada archivo de pruebas. Si PostgreSQL no está levantado, las pruebas que lo necesitan se omiten con un aviso.
 - Tramos de renta, techo del ISSS y AFP.
-- IVA del 13 %, descuento de receta del Latte grande, correlativos, validación de CCF, faltantes de stock, anulación y cuadre de caja.
+- IVA del 13 %, descuento de receta del Latte grande, correlativos, validación de CCF, faltantes de stock, anulación, apertura doble y cuadre de caja.
+- Una venta rechazada no consume el correlativo ni el inventario (transacción).
+- Rutas de la API: salud, menú, venta (201), sucursal inexistente (404), parámetro faltante (400), JSON mal formado (400) y ruta inexistente (404).
