@@ -4,10 +4,11 @@ import { useApp } from '../context/AppContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { comprasService, inventarioService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
-import { StatCard, Panel, Badge, Modal, Field, Button, Cargando, ErrorBox, Vacio } from '../components/ui/index.jsx';
+import { StatCard, Panel, Badge, Modal, Field, Button, Cargando, ErrorBox, Vacio, Pagination } from '../components/ui/index.jsx';
 import { money, fecha, qty } from '../utils/format.js';
 
 const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+const POR_PAGINA_HISTORIAL = 10;
 const FORM_VACIO = { tipo: 'costo', proveedorId: '', proveedorNombre: '', numeroFactura: '', condicion: 'contado', descripcion: '', monto: '', items: [{ insumoId: '', cantidad: '', costoUnitario: '' }], ordenCompraId: null };
 const ESTADO_CXP = { pendiente: ['amarillo', 'Pendiente'], vencida: ['rojo', 'Vencida'], pagada: ['verde', 'Pagada'] };
 
@@ -18,12 +19,17 @@ export default function Compras() {
   const [pago, setPago] = useState(null);
   const [nuevoProveedor, setNuevoProveedor] = useState(false);
   const [pestana, setPestana] = useState('registrar');
+  const [paginaHistorial, setPaginaHistorial] = useState(1);
+  useEffect(() => setPaginaHistorial(1), [sucursalId]);
 
   const resumen = useFetch(() => comprasService.resumen(), [version]);
   const proveedores = useFetch(() => comprasService.proveedores(), [version]);
   const insumos = useFetch(() => inventarioService.insumos(sucursalId), [sucursalId]);
   const cuentas = useFetch(() => comprasService.cuentas(), [version]);
-  const compras = useFetch(() => comprasService.listar({ sucursalId }), [sucursalId, version]);
+  const compras = useFetch(
+    () => comprasService.listar({ sucursalId, pagina: paginaHistorial, porPagina: POR_PAGINA_HISTORIAL }),
+    [sucursalId, paginaHistorial, version],
+  );
   const ordenes = useFetch(() => comprasService.ordenes('pendiente'), [version]);
 
   // Al elegir un insumo, se propone su costo promedio actual.
@@ -289,11 +295,13 @@ export default function Compras() {
                 <th>Tipo</th>
                 <th>Detalle</th>
                 <th>Condición</th>
+                {/* Quién registró la factura (D-19): solo en pantallas anchas, para no apretar la tabla. */}
+                <th className="hidden xl:table-cell">Registró</th>
                 <th className="text-right!">Total</th>
               </tr>
             </thead>
             <tbody>
-              {compras.data?.map((c) => (
+              {compras.data?.datos.map((c) => (
                 <tr key={c.id}>
                   <td>{fecha(c.fecha)}</td>
                   <td>{c.numeroFactura}</td>
@@ -305,13 +313,18 @@ export default function Compras() {
                   </td>
                   <td className="max-w-64 truncate text-suave">{c.tipo === 'costo' ? c.items.map((i) => i.nombre).join(', ') : c.descripcion}</td>
                   <td className="capitalize">{c.condicion === 'credito' ? 'Crédito' : 'Contado'}</td>
+                  <td className="hidden text-suave xl:table-cell">{c.registradoPor ?? '—'}</td>
                   <td className="text-right font-semibold">{money(c.total)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {compras.data?.length === 0 && <Vacio titulo="Aún no hay compras en esta sucursal" />}
+          {compras.loading && !compras.data && <Cargando />}
+          <ErrorBox error={compras.error} onRetry={compras.reload} />
+          {compras.data?.total === 0 && <Vacio titulo="Aún no hay compras en esta sucursal" />}
         </div>
+        {/* La API devuelve una página a la vez (paginación en el servidor). */}
+        <Pagination pagina={paginaHistorial} total={compras.data?.total ?? 0} porPagina={POR_PAGINA_HISTORIAL} onChange={setPaginaHistorial} etiqueta="compras" />
       </Panel>}
 
       <PagoModal cuenta={pago} onClose={() => setPago(null)} onPagado={() => { setPago(null); refrescar(); }} />
