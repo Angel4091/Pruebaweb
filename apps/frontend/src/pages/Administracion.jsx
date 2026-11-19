@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Users, ShieldCheck, UserCheck, UserX, Store, Plus, Search, Pencil, RotateCcw, DatabaseZap } from 'lucide-react';
+import { Users, ShieldCheck, UserCheck, UserX, Store, Plus, Search, Pencil, RotateCcw, DatabaseZap, History } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
-import { usuariosService, generalService, rrhhService } from '../services/index.js';
+import { usuariosService, generalService, rrhhService, bitacoraService } from '../services/index.js';
 import { PageHeader } from '../components/layout/Layout.jsx';
 import { StatCard, Panel, Badge, Pagination, Modal, Field, Button, Cargando, ErrorBox, Vacio, Aviso, Switch } from '../components/ui/index.jsx';
 import { NOMBRE_ROL } from '../utils/permisos.js';
-import { fecha } from '../utils/format.js';
+import { fecha, hora } from '../utils/format.js';
 
 const ROLES = ['admin', 'gerente', 'cajero', 'barista'];
 const COLOR_ROL = { admin: 'azul', gerente: 'amarillo', cajero: 'verde', barista: 'gris' };
@@ -84,6 +84,7 @@ export default function Administracion() {
       <div className="mt-6 mb-5 flex flex-wrap gap-2 border-b border-borde" role="tablist" aria-label="Secciones de administración">
         {[
           ['accesos', `Accesos${usuarios.data ? ` (${lista.length})` : ''}`],
+          ['bitacora', 'Bitácora'],
           ['demo', 'Datos de demostración'],
         ].map(([id, label]) => (
           <button
@@ -187,6 +188,8 @@ export default function Administracion() {
         </Panel>
       )}
 
+      {pestana === 'bitacora' && <BitacoraPanel usuarios={lista} />}
+
       {pestana === 'demo' && (
         <Panel titulo="Datos de demostración" icon={DatabaseZap} className="max-w-3xl" cuerpo="p-5">
           <p className="text-texto/85">
@@ -252,6 +255,141 @@ export default function Administracion() {
         <p>Todo lo registrado se reemplazará por los datos de demostración. Esta acción no se puede deshacer.</p>
       </Modal>
     </>
+  );
+}
+
+/** Nombres legibles de los módulos y acciones que guarda la bitácora (la API usa el nombre de la ruta). */
+const MODULOS_BITACORA = {
+  sesion: 'Inicio de sesión',
+  ventas: 'Ventas',
+  cajas: 'Caja',
+  compras: 'Compras',
+  'cuentas-por-pagar': 'Cuentas por pagar',
+  'ordenes-compra': 'Órdenes de compra',
+  proveedores: 'Proveedores',
+  insumos: 'Insumos',
+  inventario: 'Inventario',
+  productos: 'Menú',
+  clientes: 'Clientes',
+  empleados: 'Empleados',
+  planillas: 'Planilla',
+  usuarios: 'Usuarios',
+  configuracion: 'Identidad visual',
+  sistema: 'Sistema',
+};
+const ACCIONES_BITACORA = {
+  crear: ['verde', 'Creó'],
+  actualizar: ['azul', 'Editó'],
+  desactivar: ['rojo', 'Desactivó'],
+  anular: ['rojo', 'Anuló'],
+  apertura: ['amarillo', 'Abrió'],
+  cierre: ['amarillo', 'Cerró'],
+  pagar: ['amarillo', 'Pagó'],
+  entradas: ['azul', 'Registró entrada'],
+  reiniciar: ['rojo', 'Restableció datos'],
+  inicio_sesion: ['gris', 'Inició sesión'],
+};
+const POR_PAGINA_BITACORA = 12;
+const FILTROS_VACIOS = { usuarioId: '', entidad: '', desde: '', hasta: '' };
+
+/** Bitácora de auditoría: quién cambió qué y cuándo, con filtros y paginación en el servidor (BE-033). */
+function BitacoraPanel({ usuarios }) {
+  const [filtros, setFiltros] = useState(FILTROS_VACIOS);
+  const [pagina, setPagina] = useState(1);
+  const registros = useFetch(
+    () => bitacoraService.listar({ ...filtros, pagina, porPagina: POR_PAGINA_BITACORA }),
+    [filtros, pagina],
+  );
+  const set = (k) => (e) => {
+    setFiltros((f) => ({ ...f, [k]: e.target.value }));
+    setPagina(1);
+  };
+  const hayFiltros = Object.values(filtros).some(Boolean);
+
+  return (
+    <Panel
+      titulo="Bitácora de cambios"
+      icon={History}
+      className="max-w-6xl"
+      acciones={
+        hayFiltros && (
+          <button type="button" onClick={() => { setFiltros(FILTROS_VACIOS); setPagina(1); }} className="rounded-full bg-white px-4 py-1.5 font-display text-sm font-semibold text-primario hover:brightness-95">
+            Quitar filtros
+          </button>
+        )
+      }
+    >
+      <div className="grid gap-3 p-4 pb-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Usuario">
+          <select className="campo" value={filtros.usuarioId} onChange={set('usuarioId')}>
+            <option value="">Todos</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Módulo">
+          <select className="campo" value={filtros.entidad} onChange={set('entidad')}>
+            <option value="">Todos</option>
+            {Object.entries(MODULOS_BITACORA).map(([id, nombre]) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Desde">
+          <input className="campo" type="date" value={filtros.desde} max={filtros.hasta || undefined} onChange={set('desde')} />
+        </Field>
+        <Field label="Hasta">
+          <input className="campo" type="date" value={filtros.hasta} min={filtros.desde || undefined} onChange={set('hasta')} />
+        </Field>
+      </div>
+      {registros.loading && !registros.data && <Cargando />}
+      <ErrorBox error={registros.error} onRetry={registros.reload} />
+      <div className="overflow-x-auto px-4">
+        <table className="tabla min-w-[760px] overflow-hidden rounded-lg border border-borde">
+          <thead>
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Usuario</th>
+              <th>Acción</th>
+              <th>Módulo</th>
+              <th>Registro</th>
+            </tr>
+          </thead>
+          <tbody>
+            {registros.data?.datos.map((r) => {
+              const [color, accion] = ACCIONES_BITACORA[r.accion] ?? ['gris', r.accion];
+              return (
+                <tr key={r.id}>
+                  <td className="whitespace-nowrap">
+                    {fecha(r.fecha)} <span className="text-suave">{hora(r.fecha)}</span>
+                  </td>
+                  <td>
+                    <span className="block font-medium">{r.usuarioNombre ?? 'Usuario eliminado'}</span>
+                    {r.usuarioRol && <span className="block text-xs text-suave">{NOMBRE_ROL[r.usuarioRol]}</span>}
+                  </td>
+                  <td>
+                    <Badge color={color} punto={false}>
+                      {accion}
+                    </Badge>
+                  </td>
+                  <td>{MODULOS_BITACORA[r.entidad] ?? r.entidad}</td>
+                  <td className="max-w-56 truncate text-suave" title={r.detalle?.ruta}>
+                    {r.detalle?.referencia ?? r.entidadId ?? '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {registros.data?.total === 0 && <Vacio titulo={hayFiltros ? 'No hay cambios con esos filtros' : 'Todavía no hay cambios registrados'} />}
+      <Pagination pagina={pagina} total={registros.data?.total ?? 0} porPagina={POR_PAGINA_BITACORA} onChange={setPagina} etiqueta="registros" />
+    </Panel>
   );
 }
 
