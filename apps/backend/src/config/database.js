@@ -98,3 +98,6 @@ export async function aplicarEsquema(cliente = pool) {
 }
 
 export const cerrarPool = () => pool.end();
+
+/** Texto corto para la consola cuando la base no responde (ECONNREFUSED llega sin mensaje). */
+export const describirError = (err) => err.message || err.code || 'sin detalle';

@@ -1,6 +1,6 @@
 import { createApp } from './app.js';
 import { config } from './config/env.js';
-import { probarConexion, cerrarPool } from './config/database.js';
+import { probarConexion, cerrarPool, describirError } from './config/database.js';
 
 // Antes de aceptar peticiones, confirma que PostgreSQL responde.
 try {
@@ -8,7 +8,7 @@ try {
   console.log(`🐘 PostgreSQL conectado: base "${base}" con el usuario "${usuario}"`);
 } catch (err) {
   console.error('❌ No se pudo conectar a PostgreSQL. Revisa apps/backend/.env y que la base esté levantada (npm run db:up).');
-  console.error(`   Detalle: ${err.message}`);
+  console.error(`   Detalle: ${describirError(err)}`);
   await cerrarPool();
   process.exit(1);
 }
