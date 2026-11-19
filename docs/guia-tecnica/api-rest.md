@@ -74,41 +74,11 @@ PUT /api/insumos/ins-queso
 { "stockMinimo": 6, "version": 3 }
 ```
 
-## Usuarios (solo admin)
+## Rutas
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/usuarios` | Lista de usuarios con su rol, sucursal y estado |
-| POST | `/usuarios` | `{ nombre, email, password, rol, sucursalId, empleadoId }` |
-| PUT | `/usuarios/:id` | Cambia datos, rol, sucursal, estado o contraseña |
-| DELETE | `/usuarios/:id` | Desactiva el usuario (no se borra) |
+La lista completa (método, ruta, rol requerido, cuerpo y respuestas de cada una de las 68 rutas) está en [`docs/endpoints.md`](../endpoints.md).
 
-La contraseña debe tener entre 12 y 72 caracteres y se guarda con bcrypt. El admin no puede desactivarse ni quitarse el rol a sí mismo, y siempre debe quedar al menos un admin activo (409).
-
-## General
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/salud` | Estado de la API y de PostgreSQL (503 si la base no responde) |
-| GET | `/sucursales` | Lista de sucursales |
-| GET | `/dashboard?sucursalId=` | Indicadores del tablero |
-| GET | `/notificaciones?sucursalId=` | Alertas de stock y pagos próximos |
-| GET | `/buscar?q=` | Búsqueda global |
-| GET, POST | `/clientes` | Listar (`?q=&activo=`) / crear cliente |
-| GET, PUT | `/clientes/:id` | Obtener / editar cliente |
-| DELETE | `/clientes/:id` | Desactivar (409 para "Consumidor final") |
-| GET, PUT | `/configuracion` | Identidad visual (GET es público; PUT solo admin) |
-| GET | `/configuracion/fuentes` | Tipografías disponibles |
-| POST | `/sistema/reiniciar` | Restablece los datos de demostración (solo admin; no existe en producción) |
-
-## Ventas (POS)
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/ventas?sucursalId=&desde=&hasta=&tipoComprobante=&estado=&pagina=&porPagina=` | Ventas paginadas (`?fecha=` filtra un solo día) |
-| GET | `/ventas/:id` | Comprobante con cliente, sucursal, caja y quién atendió (`atendio`) |
-| POST | `/ventas` | Registrar venta |
-| PATCH | `/ventas/:id/anular` | Anular venta del turno abierto |
+## Ejemplo: registrar una venta
 
 ```json
 POST /api/ventas
@@ -123,76 +93,13 @@ POST /api/ventas
 }
 ```
 
-**IVA (D-14):** los precios del menú ya incluyen el 13 %. El total es la suma de las líneas; `subtotal` es el valor sin IVA (cada línea ÷ 1.13) e `iva` la diferencia. Un Latte grande de $2.75 se cobra $2.75: $2.43 sin IVA y $0.32 de IVA. La factura de consumidor final muestra el total con el IVA incluido; el crédito fiscal, las líneas sin IVA, el 13 % y el total.
+**IVA incluido (D-14):** los precios del menú ya incluyen el 13 %. El total es la suma de las líneas; `subtotal` es el valor sin IVA (cada línea ÷ 1.13) e `iva` la diferencia. Un Latte grande de $2.75 se cobra $2.75: $2.43 sin IVA y $0.32 de IVA. La factura de consumidor final muestra el total con el IVA incluido; el crédito fiscal, las líneas sin IVA, el 13 % y el total.
 
-## Productos, recetas e inventario
+## Contraseñas de los usuarios
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/categorias` | Categorías del menú |
-| GET | `/productos?sucursalId=&categoriaId=&q=&activo=` | Productos con precio sin IVA, costo, margen, receta y unidades disponibles |
-| GET | `/productos/:id` | Detalle |
-| POST | `/productos` | Crear producto elaborado (con receta) o de reventa |
-| PUT | `/productos/:id` | Actualizar (con `version`) |
-| DELETE | `/productos/:id` | Baja lógica |
-| GET | `/insumos?sucursalId=&activo=` | Insumos con existencia, estado y versión |
-| POST | `/insumos` | Crear insumo |
-| PUT | `/insumos/:id` | Actualizar insumo (con `version`; `activo: true` lo reactiva) |
-| DELETE | `/insumos/:id` | Desactivar (409 si lo usa la receta de un platillo activo) |
-| GET | `/inventario/resumen?sucursalId=` | Tarjetas del módulo |
-| GET | `/inventario/alertas?sucursalId=` | Alertas de stock mínimo |
-| GET | `/inventario/movimientos?sucursalId=&limite=` | Movimientos de inventario |
-| POST | `/inventario/entradas` | Entrada de insumo (`insumoId`) o reventa (`productoId`) |
+La contraseña debe tener entre 12 y 72 caracteres y se guarda con bcrypt. El admin no puede desactivarse ni quitarse el rol a sí mismo, y siempre debe quedar al menos un admin activo (409).
 
-## Caja
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/cajas?sucursalId=` | Cajas con su turno abierto y totales en vivo |
-| POST | `/cajas/:id/apertura` | `{ montoInicial, denominaciones, responsable }` |
-| GET | `/cajas/:id/resumen` | Resumen del turno abierto |
-| POST | `/cajas/:id/cierre` | `{ efectivoContado }` → totales y diferencia |
-| GET | `/turnos?sucursalId=&dias=` | Historial de turnos |
-| GET | `/caja/metodos-pago?sucursalId=` | Ventas del día por método |
-
-## Compras
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET, POST | `/proveedores` | Listar (`?activo=`) / crear |
-| GET, PUT | `/proveedores/:id` | Obtener / actualizar |
-| DELETE | `/proveedores/:id` | Desactivar (ya no recibe compras) |
-| GET | `/compras?tipo=&proveedorId=&desde=&hasta=&pagina=&porPagina=` | Historial paginado, con quién la registró (`registradoPor`) |
-| GET | `/compras/resumen` | Compras y gastos del mes, saldo por pagar |
-| POST | `/compras` | Registrar factura (costo o gasto) |
-| GET | `/cuentas-por-pagar` | Cuentas con estado calculado |
-| PATCH | `/cuentas-por-pagar/:id/pagar` | `{ monto }` pago total o abono |
-| GET, POST | `/ordenes-compra` | Órdenes sugeridas |
-
-## Recursos humanos
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET, POST | `/empleados` | Listar (`?q=&estado=&sucursalId=`) / crear |
-| GET | `/empleados/cargos` | Cargos disponibles |
-| PUT, DELETE | `/empleados/:id` | Actualizar / dar de baja |
-| GET | `/planillas` | Historial |
-| GET | `/planillas/calculo?fecha=` | Vista previa del periodo |
-| POST | `/planillas` | Generar planilla del periodo |
-| GET | `/planillas/:id` | Detalle |
-| PATCH | `/planillas/:id/pagar` | Marcar como pagada |
-
-## Pronóstico
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/pronostico?sucursalId=&dias=7` | Resumen, serie, consumo por insumo, alertas y pedidos |
-
-## Bitácora (solo admin)
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/bitacora?usuarioId=&entidad=&accion=&desde=&hasta=&pagina=&porPagina=` | Quién cambió qué y cuándo, de lo más reciente a lo más antiguo |
+## Bitácora
 
 Cada cambio que termina bien (POST, PUT, PATCH o DELETE con respuesta 2xx) y cada inicio de sesión quedan registrados con el usuario, la acción, el módulo, el registro afectado y un resumen de los datos enviados, sin contraseñas ni imágenes.
 
