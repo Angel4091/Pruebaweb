@@ -73,8 +73,8 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Fase:** 1.
 
 ## D-09 · Límite del cuerpo JSON
-- **Fuentes:** la clase 08 limita `express.json` a 100 kb; la foto de un producto y el logo viajan en base64 de hasta 1 MB.
-- **Decisión:** 100 kb para toda la API y unos 1.5 MB solo en las rutas de foto de producto y de logo.
+- **Fuentes:** la clase 08 limita `express.json` a 100 kb; la foto de un producto viaja en base64 de hasta 1 MB y el logo de hasta 2 MB.
+- **Decisión:** 100 kb para toda la API; unos 1.5 MB solo en las rutas de productos y unos 3 MB en `PUT /configuracion` (logo).
 - **Motivo:** proteger la API sin romper la carga de imágenes.
 - **Fase:** 3.
 
@@ -104,9 +104,10 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Motivo:** así se emiten los comprobantes en El Salvador.
 - **Fase:** 5.
 
-## D-15 · Unidades en gramos, mililitros y unidades
-- **Fuentes:** los lineamientos describen la receta del Latte grande en g y ml; hoy el inventario usa kg, lt y und.
-- **Decisión:** guardar en `g`, `ml` y `unidad`. El inventario mostrará, por ejemplo, 2500 g en lugar de 2.5 kg.
+## D-15 · Unidades del inventario: se mantienen kg, lt y und
+- **Fuentes:** los lineamientos describen la receta del Latte grande en g y ml; el inventario usa kg, lt y und.
+- **Decisión (cambiada el 18 nov):** se mantienen kg, lt y und, con 4 decimales en la base (18 g de café = 0.0180 kg).
+- **Motivo:** al revisar el frontend se vio que la pantalla ya muestra las cantidades pequeñas en g y ml (la receta del Latte aparece como "18 g" y "250 ml"). Guardar en gramos haría que el costo por gramo se viera como "$0.00" y que las compras fueran de "15000 g de queso". La regla de los lineamientos se cumple igual: vender un Latte grande descuenta exactamente 18 g, 250 ml, 1 vaso, 1 tapadera y 1 viñeta, y hay una prueba que lo verifica.
 - **Fase:** 2.
 
 ## D-16 · El pronóstico se queda
@@ -142,3 +143,25 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Fuentes:** las clases 02 y 03 piden `main` protegida y `develop` para integrar; en GitHub hoy solo existe `develop`.
 - **Decisión:** crear `main` desde `develop` y protegerla; todo entra por pull request. El detalle está en [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 - **Fase:** 0.
+
+## D-23 · Identificadores de texto en los catálogos
+- **Fuentes:** las clases usan `bigserial` para todas las llaves primarias; el frontend usa los ids actuales ("prod-latte-grande") para encontrar la foto de cada producto e insumo.
+- **Decisión:** los catálogos y documentos (sucursales, productos, insumos, ventas, compras, turnos…) conservan su id de texto; las tablas internas (detalles, pagos, usuarios, bitácora) usan `bigserial`.
+- **Motivo:** cambiar los ids rompería el contrato con el frontend (clase 05: "hablar el mismo lenguaje en todas las partes").
+- **Fase:** 2.
+
+## D-24 · Datos de demo desde JavaScript, no desde seed.sql
+- **Fuentes:** la clase 07 lee un `seed.sql`; el historial de ventas debe ser reciente para que Inicio y Pronóstico tengan datos.
+- **Decisión:** `npm run db:seed` carga `database/seeds/seed.mjs`, que genera 14 días de ventas contados desde hoy, y los inserta con consultas parametrizadas en una transacción. También crea un usuario por rol con bcrypt y `SEED_PASSWORD`, como en la clase 07.
+- **Motivo:** un `seed.sql` con fechas fijas dejaría el tablero vacío a los pocos días.
+- **Fase:** 2.
+
+## D-25 · Scripts de base de datos dentro del backend
+- **Fuentes:** el plan inicial ponía los scripts en `scripts/` de la raíz; la clase 06 explica que, si un script solo le sirve al backend y usa su conexión, va en el backend.
+- **Decisión:** `apps/backend/scripts/db-init.mjs` y `db-seed.mjs`; la raíz solo los llama (`npm run db:init`, `npm run db:seed`). El esquema sigue en `database/schema.sql`, independiente del backend.
+- **Fase:** 2.
+
+## D-26 · Pruebas contra una base separada
+- **Fuentes:** las pruebas del backend ahora necesitan PostgreSQL.
+- **Decisión:** `npm test` usa la base `origenes_test` (la crea el contenedor de Docker) y la vuelve a cargar con los datos de demo antes de cada archivo. Nunca toca la base de desarrollo. Si PostgreSQL no está levantado, las pruebas que lo necesitan se omiten con un aviso.
+- **Fase:** 2.
