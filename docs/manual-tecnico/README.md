@@ -110,9 +110,11 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 
 | Carpeta | Contenido |
 |---|---|
-| `context/AppContext.jsx` | Sucursal activa (localStorage), configuración de marca aplicada como variables CSS, modo oscuro, toasts y una versión de datos para refrescar vistas. |
+| `context/AuthContext.jsx` | Sesión: `iniciarSesion`, `cerrarSesion`, el usuario de `/auth/me` al abrir la app y `puedeVer` / `puede` según el rol. Si la API responde 401, vuelve al login con un aviso. |
+| `context/AppContext.jsx` | Sucursal activa (el admin la elige y queda en localStorage; los demás roles usan la suya), configuración de marca aplicada como variables CSS, modo oscuro, toasts y una versión de datos para refrescar vistas. |
+| `utils/permisos.js` | Qué pantallas y acciones ve cada rol. Solo oculta módulos y botones: quien decide es la API (403). |
 | `hooks/useFetch.js` | Ejecuta una promesa, expone `data`, `loading`, `error` y `reload`, e ignora respuestas tardías. |
-| `services/` | `api.js` (cliente HTTP) e `index.js` (un objeto de servicio por módulo). |
+| `services/` | `api.js` (cliente HTTP; guarda el token en sessionStorage y lo envía como `Authorization: Bearer`) e `index.js` (un objeto de servicio por módulo). |
 | `components/ui` | Botón, tarjetas KPI, panel, insignias, modal accesible, paginación, toasts, switch, estados de carga y error. |
 | `components/charts` | Gráfica de líneas (con curvas suaves y tooltip), dona y barras en SVG, sin librerías externas. |
 | `components/decor` | Pirámide, greca, escena del encabezado e ilustraciones SVG de platillos e insumos. |
@@ -122,6 +124,8 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 **Logo:** `Logo` (`components/decor/Decor.jsx`) usa el PNG transparente del logo como máscara CSS, así se pinta con cualquier color de la marca (dorado en el menú, azul en la barra superior). Si en Identidad Visual se sube un logo propio, se usa ese.
 
 **Ornamentos mayas:** `components/decor/Decor.jsx` reúne las ilustraciones SVG propias: `EscenaEncabezado` (templo, ceiba y quetzal), `Greca` (xicalcoliuhqui), `Cresteria`, `OrnamentoTitulo`, `EsquinaGreca`, `BordeEscalonado` y `SolMaya`. La clase CSS `.escalonado` recorta los íconos de las tarjetas con esquinas en escalón (`clip-path`).
+
+**Rutas protegidas:** `routes/AppRouter.jsx` deja `/login` público; el resto pasa por `RequiereSesion` (sin sesión lleva al login y recuerda la pantalla pedida) y por `SoloRol` (si el rol no incluye el módulo, muestra `SinAcceso`). El menú lateral y la guía muestran solo los módulos del rol.
 
 **Tema:** los colores viven en variables CSS (`--c-primario`, `--c-secundario`, …) que Tailwind expone como clases (`bg-primario`, `text-texto`). El módulo Identidad Visual las modifica en tiempo real.
 

@@ -96,7 +96,7 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 ## D-13 · Pantalla de inicio de sesión
 - **Fuentes:** el equipo había elegido "solo menú y pantallas", sin login; los roles (D-04) lo hacen necesario.
 - **Decisión:** se agrega una pantalla de login con el mismo estilo visual. El resto del diseño no cambia.
-- **Fase:** 4.
+- **Fase:** 4 (se adelantó a la 3, junto con el backend de seguridad).
 
 ## D-14 · IVA incluido en el precio
 - **Fuentes:** los lineamientos piden aplicar el 13 % de IVA; hoy el sistema lo suma encima del precio.
@@ -123,6 +123,7 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 ## D-18 · Herramientas de administración
 - **Fuentes:** la clase 15 recomienda una sección de herramientas internas solo para el administrador.
 - **Decisión:** un módulo "Administración", visible solo para el admin, con las pestañas Accesos (usuarios, rol, sucursal, desactivar), Bitácora y Datos de demo, con el mismo estilo de pestañas de Compras. Antes de cerrarlo se verifica que el menú quepa sin scroll en pantallas bajas; si no cabe, Accesos pasa a una pestaña de Personal.
+- **Resultado (18 nov):** con Administración, el menú del admin tiene 9 módulos y a 761 px de alto le faltaban 7 px. El menú compacto ahora empieza en 780 px de alto (antes 760) y así cabe sin scroll en todas las alturas probadas (540 a 781 px). Accesos se queda en Administración. La pestaña Bitácora llega en la Fase 5 con BE-032 y BE-033.
 - **Fase:** 3 y 4.
 
 ## D-19 · Quién registró y versión del registro
@@ -177,3 +178,9 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Decisión:** el gerente ve compras, cuentas por pagar, órdenes, empleados y la planilla solo de su sucursal (las líneas de su personal y sus totales). Generar y pagar la planilla es solo del admin. Al registrar un empleado, el gerente lo hace siempre en su sucursal.
 - **Motivo:** cada gerente responde por su sucursal; los pagos de toda la empresa los aprueba el admin.
 - **Fase:** 3 (backend) y 4 (frontend).
+
+## D-29 · El token se guarda en sessionStorage
+- **Fuentes:** el frontend necesita conservar el token entre recargas; en una sucursal, varios turnos usan la misma computadora de caja.
+- **Decisión:** el token vive en `sessionStorage`: sobrevive a una recarga, pero se borra al cerrar la pestaña. Al cerrar sesión se vuelve a un login limpio, sin recordar la pantalla anterior, porque el siguiente turno puede ser de otro rol. Si la API responde 401, la app borra el token y vuelve al login con el aviso "Tu sesión terminó".
+- **Motivo:** que una sesión no quede abierta para la siguiente persona que use la caja.
+- **Fase:** 3.
