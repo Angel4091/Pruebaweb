@@ -1,0 +1,26 @@
+# Servicio de systemd para la API de Orígenes SV (Ubuntu o Debian).
+# Mantiene Express encendido, lo reinicia si se cae y lo arranca con el servidor.
+#
+#   sudo cp deploy/origenes-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now origenes-api
+#   sudo journalctl -u origenes-api -f      # ver los mensajes de la API
+#
+# Las variables (JWT_SECRET, DB_*, CORS_ORIGIN, TRUST_PROXY…) se leen de
+# /var/www/origenes/apps/backend/.env, que solo debe poder leer el usuario "origenes".
+
+[Unit]
+Description=API de Origenes SV (Express)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=origenes
+WorkingDirectory=/var/www/origenes/apps/backend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
