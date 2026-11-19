@@ -41,6 +41,18 @@ Los bloqueos (`select ... for update`) evitan que dos cajas vendan el último in
 - Un CCF solo se emite a un cliente contribuyente con NIT y NRC (`clientes_contribuyente_check`).
 - La misma factura no se registra dos veces para un proveedor, ni la misma quincena dos veces.
 
+### 1.3 Seguridad
+
+| Capa | Dónde | Qué hace |
+|---|---|---|
+| Inicio de sesión | `modules/auth` | Compara la contraseña con bcrypt (costo 12) y firma un JWT HS256 de 8 horas con emisor y audiencia. Si el correo no existe compara igual contra un hash de relleno, para no revelar qué correos están registrados. Máximo 10 intentos fallidos cada 15 minutos por IP. |
+| Autenticación | `middlewares/auth.js` | Exige `Authorization: Bearer <token>`, verifica firma, algoritmo, emisor, audiencia y vencimiento, y vuelve a leer el usuario de la base (si está desactivado → 401). |
+| Roles | `middlewares/roles.js` → `permitir(...)` | Cada ruta declara qué roles la usan (`TODOS`, `GESTION`, `CAJA`, `SOLO_ADMIN`); si no → 403. |
+| Sucursal | `limitarASuSucursal`, `deSuSucursal`, `sucursalDe` | Quien no es admin solo consulta o modifica su sucursal: si pide otra → 403, y los listados sin sucursal devuelven la suya. Para recursos con id (caja, venta, empleado, cuenta por pagar) se busca su sucursal antes de actuar. |
+| Encabezados | `helmet()` en `app.js` | CSP, `nosniff`, protección contra iframes y sin `X-Powered-By`. |
+| Límites | `app.js` | 300 peticiones por minuto por IP (`RATE_LIMIT_POR_MINUTO`); cuerpos JSON de 100 kb, salvo productos (1.5 MB) y configuración (3 MB) por las imágenes (D-09). |
+| Arranque | `server.js` | Sin un `JWT_SECRET` de 32 caracteres o más, o con `CORS_ORIGIN=*` en producción, la API no arranca. |
+
 ## 2. Lógica de negocio principal
 
 ### 2.1 Ventas y facturación (`ventas.service.js`)
@@ -151,3 +163,4 @@ server {
 - IVA del 13 %, descuento de receta del Latte grande, correlativos, validación de CCF, faltantes de stock, anulación, apertura doble y cuadre de caja.
 - Una venta rechazada no consume el correlativo ni el inventario (transacción).
 - Rutas de la API: salud, menú, venta (201), sucursal inexistente (404), parámetro faltante (400), JSON mal formado (400) y ruta inexistente (404).
+- Seguridad (`seguridad.test.js`): login correcto e incorrecto (mismo 401 para correo inexistente), tokens con otra firma, otra audiencia, vencidos o sin algoritmo (401), permisos de cada rol (403), acceso a otra sucursal (403), reglas de usuarios (correo repetido, contraseña corta, no desactivarse a sí mismo, sesión inválida al desactivar), encabezados de helmet, límite de peticiones y cuerpo de más de 100 kb (413).

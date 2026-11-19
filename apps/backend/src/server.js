@@ -1,6 +1,14 @@
 import { createApp } from './app.js';
-import { config } from './config/env.js';
+import { config, problemasDeSeguridad } from './config/env.js';
 import { probarConexion, cerrarPool, describirError } from './config/database.js';
+
+// Sin una configuración segura (JWT_SECRET, CORS) la API no arranca.
+const problemas = problemasDeSeguridad();
+if (problemas.length > 0) {
+  console.error('❌ La configuración de seguridad está incompleta (apps/backend/.env):');
+  for (const p of problemas) console.error(`   • ${p}`);
+  process.exit(1);
+}
 
 // Antes de aceptar peticiones, confirma que PostgreSQL responde.
 try {

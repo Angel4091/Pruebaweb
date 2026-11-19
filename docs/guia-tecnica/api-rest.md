@@ -7,12 +7,56 @@ Base: `http://localhost:3000/api` · Formato: JSON · Errores: `{ "error": "mens
 | 200 | Consulta o actualización correcta |
 | 201 | Recurso creado (POST) |
 | 400 | Parámetro faltante o JSON inválido |
+| 401 | Sin sesión, token inválido o vencido, o credenciales incorrectas |
+| 403 | El rol no tiene permiso o la sucursal no es la del usuario |
 | 404 | Recurso o ruta inexistente |
 | 409 | Conflicto de negocio (caja cerrada, stock insuficiente, planilla duplicada, registro repetido) |
 | 413 | Petición o imagen demasiado grande |
 | 422 | Datos inválidos (validaciones o reglas de la base de datos) |
+| 429 | Demasiadas peticiones (300 por minuto; 10 intentos fallidos de login cada 15 minutos) |
 | 500 | Error interno (sin detalles de la base de datos) |
 | 503 | La base de datos no responde (`/salud`) |
+
+## Autenticación
+
+Solo `/salud`, `GET /configuracion`, `/configuracion/fuentes` y `POST /auth/login` son públicas. Las demás rutas piden el encabezado `Authorization: Bearer <token>`.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/auth/login` | `{ email, password }` → `{ token, expira, usuario }` |
+| GET | `/auth/me` | Usuario de la sesión: id, nombre, correo, rol y sucursal |
+
+- El token es un JWT firmado con HS256 que dura 8 horas (`JWT_EXPIRES_IN`); lleva el id del usuario en `sub`, su rol y su sucursal, con emisor `origenes-sv-api` y audiencia `origenes-sv-web`.
+- En cada petición se vuelve a leer el usuario de la base: si el admin lo desactiva, su sesión deja de servir de inmediato.
+- Los usuarios que no son admin solo trabajan con su sucursal: si piden otra (`?sucursalId=` o en el cuerpo) la respuesta es 403, y los listados sin sucursal devuelven solo la suya.
+
+### Quién puede usar cada ruta
+
+| Módulo | admin | gerente | cajero | barista |
+|---|---|---|---|---|
+| Inicio, notificaciones y búsqueda | sí | sí | sí | sí |
+| Ventas: registrar y ver un comprobante | sí | sí | sí | sí |
+| Ventas: historial | sí | sí | sí | no |
+| Ventas: anular | sí | sí | no | no |
+| Menú, insumos, existencias y proveedores (consultar) | sí | sí | sí | sí |
+| Menú, insumos y entradas de inventario (modificar) | sí | sí | no | no |
+| Caja: apertura, cierre, turnos y métodos de pago | sí | sí | sí | no |
+| Compras, cuentas por pagar y órdenes | sí | sí | no | no |
+| Empleados y planilla (consultar) | sí | su sucursal | no | no |
+| Planilla: generar y pagar | sí | no | no | no |
+| Pronóstico | sí | sí | no | no |
+| Configuración (modificar), usuarios y reinicio de datos | sí | no | no | no |
+
+## Usuarios (solo admin)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/usuarios` | Lista de usuarios con su rol, sucursal y estado |
+| POST | `/usuarios` | `{ nombre, email, password, rol, sucursalId, empleadoId }` |
+| PUT | `/usuarios/:id` | Cambia datos, rol, sucursal, estado o contraseña |
+| DELETE | `/usuarios/:id` | Desactiva el usuario (no se borra) |
+
+La contraseña debe tener entre 12 y 72 caracteres y se guarda con bcrypt. El admin no puede desactivarse ni quitarse el rol a sí mismo, y siempre debe quedar al menos un admin activo (409).
 
 ## General
 
@@ -24,9 +68,9 @@ Base: `http://localhost:3000/api` · Formato: JSON · Errores: `{ "error": "mens
 | GET | `/notificaciones?sucursalId=` | Alertas de stock y pagos próximos |
 | GET | `/buscar?q=` | Búsqueda global |
 | GET, POST | `/clientes` | Listar (`?q=`) / crear cliente |
-| GET, PUT | `/configuracion` | Identidad visual |
+| GET, PUT | `/configuracion` | Identidad visual (GET es público; PUT solo admin) |
 | GET | `/configuracion/fuentes` | Tipografías disponibles |
-| POST | `/sistema/reiniciar` | Restablece los datos de demostración |
+| POST | `/sistema/reiniciar` | Restablece los datos de demostración (solo admin; no existe en producción) |
 
 ## Ventas (POS)
 

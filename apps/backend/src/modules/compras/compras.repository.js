@@ -88,13 +88,13 @@ export async function listarCompras({ sucursalId, tipo } = {}, db = pool) {
 }
 
 /** Total de compras de insumos (costo) y de gastos en un rango de fechas. */
-export async function totalesPorTipo(desde, hasta, db = pool) {
+export async function totalesPorTipo(desde, hasta, sucursalId, db = pool) {
   const sql = `
     select coalesce(sum(total) filter (where tipo = 'costo'), 0) as costos,
            coalesce(sum(total) filter (where tipo = 'gasto'), 0) as gastos
     from compras
-    where fecha >= $1 and fecha < $2`;
-  return unaFila(await db.query(sql, [desde, hasta]));
+    where fecha >= $1 and fecha < $2 and ($3::text is null or sucursal_id = $3)`;
+  return unaFila(await db.query(sql, [desde, hasta, sucursalId || null]));
 }
 
 /* ---------- Cuentas por pagar ---------- */
@@ -117,8 +117,18 @@ export async function obtenerCuenta(id, db = pool) {
   return unaFila(await db.query(`${SELECT_CUENTA} where c.id = $1`, [id]));
 }
 
-export async function listarCuentas(db = pool) {
-  return todas(await db.query(`${SELECT_CUENTA} order by c.fecha_vencimiento, c.id`));
+/** Cuentas por pagar; con sucursal, solo las de compras de esa sucursal. */
+export async function listarCuentas(sucursalId, db = pool) {
+  const sql = `${SELECT_CUENTA}
+    where ($1::text is null or exists (select 1 from compras x where x.id = c.compra_id and x.sucursal_id = $1))
+    order by c.fecha_vencimiento, c.id`;
+  return todas(await db.query(sql, [sucursalId || null]));
+}
+
+/** Sucursal de la compra que originó la cuenta (undefined si la cuenta no existe). */
+export async function sucursalDeCuenta(id, db = pool) {
+  const sql = 'select x.sucursal_id from cuentas_por_pagar c join compras x on x.id = c.compra_id where c.id = $1';
+  return unaFila(await db.query(sql, [id]))?.sucursalId;
 }
 
 /** Cuentas con saldo que vencen antes de una fecha (para las notificaciones). */
@@ -159,8 +169,11 @@ export async function obtenerOrden(id, db = pool) {
   return unaFila(await db.query(`${SELECT_ORDEN} where o.id = $1`, [id]));
 }
 
-export async function listarOrdenes(estado, db = pool) {
-  return todas(await db.query(`${SELECT_ORDEN} where ($1::text is null or o.estado = $1) order by o.fecha desc, o.id desc`, [estado || null]));
+export async function listarOrdenes(estado, sucursalId, db = pool) {
+  const sql = `${SELECT_ORDEN}
+    where ($1::text is null or o.estado = $1) and ($2::text is null or o.sucursal_id = $2)
+    order by o.fecha desc, o.id desc`;
+  return todas(await db.query(sql, [estado || null, sucursalId || null]));
 }
 
 export async function marcarOrdenRecibida(id, compraId, db) {

@@ -55,6 +55,13 @@ export async function actualizarEmpleado(id, data) {
   return repo.guardarEmpleado(emp);
 }
 
+/** Sucursal donde trabaja el empleado (404 si no existe). */
+export async function sucursalDeEmpleado(id) {
+  const emp = await repo.obtenerEmpleado(id);
+  if (!emp) throw notFound('Empleado');
+  return emp.sucursalId;
+}
+
 /** Baja de empleado: se marca como inactivo para conservar su historial de planillas. */
 export const darDeBajaEmpleado = (id) => actualizarEmpleado(id, { estado: 'inactivo' });
 
@@ -62,10 +69,23 @@ export const darDeBajaEmpleado = (id) => actualizarEmpleado(id, { estado: 'inact
 
 const conTotales = (planilla) => (planilla ? { ...planilla, totales: totalizarPlanilla(planilla.detalles) } : null);
 
-/** Vista previa de la planilla del periodo (no se guarda). */
-export async function calcularPlanilla(fecha, db) {
+/**
+ * La planilla es de toda la empresa; el gerente solo ve las líneas
+ * de los empleados de su sucursal (y los totales de esas líneas).
+ */
+async function soloDeSucursal(planillas, sucursalId) {
+  if (!sucursalId) return planillas;
+  const ids = new Set((await repo.listarEmpleados({ sucursalId })).map((e) => e.id));
+  return planillas.map((p) => {
+    const detalles = p.detalles.filter((d) => ids.has(d.empleadoId));
+    return { ...p, detalles, totales: totalizarPlanilla(detalles) };
+  });
+}
+
+/** Vista previa de la planilla del periodo (no se guarda). Con sucursal, solo sus empleados. */
+export async function calcularPlanilla(fecha, db, sucursalId) {
   const periodo = periodoQuincenal(fecha ? new Date(`${fecha}T12:00:00`) : new Date());
-  const empleados = await repo.listarEmpleados({ estado: 'activo' }, db);
+  const empleados = await repo.listarEmpleados({ estado: 'activo', sucursalId }, db);
   const detalles = empleados.map(calcularDetalleEmpleado);
   const existente = await repo.planillaDelPeriodo(periodo.inicio, db);
   return { periodo, detalles, totales: totalizarPlanilla(detalles), estado: existente?.estado ?? 'borrador', id: existente?.id ?? null };
@@ -96,10 +116,12 @@ export async function pagarPlanilla(id) {
   });
 }
 
-export const listarPlanillas = async () => (await repo.listarPlanillas()).map(conTotales);
+export const listarPlanillas = async ({ sucursalId } = {}) =>
+  soloDeSucursal((await repo.listarPlanillas()).map(conTotales), sucursalId);
 
-export async function obtenerPlanilla(id) {
+export async function obtenerPlanilla(id, { sucursalId } = {}) {
   const planilla = await repo.obtenerPlanilla(id);
   if (!planilla) throw notFound('Planilla');
-  return conTotales(planilla);
+  const [vista] = await soloDeSucursal([conTotales(planilla)], sucursalId);
+  return vista;
 }

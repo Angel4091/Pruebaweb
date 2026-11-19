@@ -10,10 +10,10 @@ BE-020,2,BE,Angel4091,"Repositorios de inventario, productos y recetas",feature/
 BE-021,2,BE,Angel4091,Repositorio de compras; compra y cuenta por pagar en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 4
 BE-030,2,BE,Angel4091,Repositorio de RR. HH. y generación de planilla en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 5
 BE-031,2,BE,Angel4091,Pronóstico y tablero de inicio leyendo de PostgreSQL,feature/angel/BE-020,en revisión,,2026-11-18,,D-16; reasignado del Integrante 5
-BE-001,3,BE,Integrante 2,Módulo auth: login y me con bcrypt y JWT (HS256 con issuer y audience),,pendiente,,,,
-BE-002,3,BE,Integrante 2,"Middlewares de autenticación (401), roles (403) y sucursal",,pendiente,,,,D-04
-BE-003,3,BE,Integrante 2,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",,pendiente,,,,"D-09, D-20"
-BE-004,3,BE,Integrante 2,"Usuarios y accesos: crear, asignar rol y sucursal, desactivar",,pendiente,,,,D-18
+BE-001,3,BE,Angel4091,Módulo auth: login y me con bcrypt y JWT (HS256 con issuer y audience),feature/angel/BE-001,en revisión,,2026-11-18,,"D-27; reasignado del Integrante 2"
+BE-002,3,BE,Angel4091,"Middlewares de autenticación (401), roles (403) y sucursal",feature/angel/BE-001,en revisión,,2026-11-18,,"D-04, D-28; reasignado del Integrante 2"
+BE-003,3,BE,Angel4091,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",feature/angel/BE-001,en revisión,,2026-11-18,,"D-09, D-20; reasignado del Integrante 2"
+BE-004,3,BE,Angel4091,"Usuarios y accesos: crear, asignar rol y sucursal, desactivar",feature/angel/BE-001,en revisión,,2026-11-18,,"D-18; reasignado del Integrante 2"
 FE-001,4,FE,Integrante 6,Pantalla de inicio de sesión con el estilo actual,,pendiente,,,,D-13
 FE-002,4,FE,Integrante 6,Sesión y token en api.js; la sesión vencida vuelve al login,,pendiente,,,,
 FE-003,4,FE,Integrante 6,Menú y acciones según el rol,,pendiente,,,,D-04

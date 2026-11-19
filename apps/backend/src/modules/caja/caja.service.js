@@ -37,7 +37,7 @@ export async function listarCajas(sucursalId) {
 }
 
 /** Apertura de caja: registra el fondo inicial y su desglose por denominación. */
-export async function abrirCaja(cajaId, { montoInicial, denominaciones, responsable = 'Cajero de turno' } = {}) {
+export async function abrirCaja(cajaId, { montoInicial, denominaciones, responsable } = {}, usuario = null) {
   const caja = await obtenerCaja(cajaId);
   if (await repo.turnoAbierto(cajaId)) throw new AppError(`${caja.nombre} ya tiene un turno abierto`, 409);
   let monto = Number(montoInicial);
@@ -57,10 +57,12 @@ export async function abrirCaja(cajaId, { montoInicial, denominaciones, responsa
     sucursalId: caja.sucursalId,
     fecha: toDateKey(ahora),
     turno: turnoActual(ahora),
-    responsable,
+    // El responsable es quien abre la caja (si no se indica otro nombre).
+    responsable: String(responsable || usuario?.nombre || 'Cajero de turno').trim().slice(0, 120),
     montoInicial: round2(monto),
     denominaciones: denominaciones ?? null,
     apertura: ahora,
+    abiertoPor: usuario?.id ?? null,
   });
   return conTotales(turno);
 }
@@ -78,7 +80,7 @@ export async function resumenCaja(cajaId) {
  * (fondo inicial + ventas en efectivo) y guarda los totales por método de pago.
  * Bloquea el turno para que no entren ventas mientras se cierra.
  */
-export async function cerrarCaja(cajaId, { efectivoContado, observaciones = '' } = {}) {
+export async function cerrarCaja(cajaId, { efectivoContado, observaciones = '' } = {}, usuario = null) {
   const contado = Number(efectivoContado);
   if (Number.isNaN(contado) || contado < 0) throw new AppError('El efectivo contado debe ser un número mayor o igual a cero', 422);
   return withTransaction(async (client) => {
@@ -93,6 +95,7 @@ export async function cerrarCaja(cajaId, { efectivoContado, observaciones = '' }
       efectivoEsperado,
       diferencia: round2(contado - efectivoEsperado),
       observaciones: String(observaciones ?? ''),
+      cerradoPor: usuario?.id ?? null,
     }, client);
   });
 }
