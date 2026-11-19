@@ -59,6 +59,32 @@ export async function withTransaction(trabajo) {
   }
 }
 
+/**
+ * Usa la transacción que ya existe (si una operación es parte de otra más grande,
+ * como la entrada de inventario dentro de una compra) o abre una nueva.
+ */
+export const usarTransaccion = (client, trabajo) => (client ? trabajo(client) : withTransaction(trabajo));
+
+/**
+ * Inserta muchas filas en lotes con una sola consulta parametrizada por lote.
+ * El nombre de la tabla y las columnas son constantes del código, nunca datos del usuario.
+ */
+export async function insertarFilas(client, tabla, columnas, filas) {
+  const LOTE = 500;
+  for (let inicio = 0; inicio < filas.length; inicio += LOTE) {
+    const lote = filas.slice(inicio, inicio + LOTE);
+    const valores = [];
+    const marcadores = lote.map((fila) => {
+      const posiciones = fila.map((valor) => {
+        valores.push(valor);
+        return `$${valores.length}`;
+      });
+      return `(${posiciones.join(', ')})`;
+    });
+    await client.query(`insert into ${tabla} (${columnas.join(', ')}) values ${marcadores.join(', ')}`, valores);
+  }
+}
+
 /** Consulta mínima para comprobar que la base responde. */
 export async function probarConexion() {
   const { rows } = await pool.query('select current_database() as base, current_user as usuario, now() as hora');

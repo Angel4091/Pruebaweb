@@ -15,3 +15,18 @@ export const addDays = (date, days) => {
   d.setDate(d.getDate() + days);
   return d;
 };
+
+/** Medianoche local de una fecha "YYYY-MM-DD". */
+export const inicioDelDia = (fecha) => new Date(`${fecha}T00:00:00`);
+
+/** Rango [desde, hasta) de un día local, para filtrar columnas timestamptz. */
+export const rangoDelDia = (fecha = toDateKey()) => {
+  const desde = inicioDelDia(fecha);
+  return { desde, hasta: addDays(desde, 1) };
+};
+
+/** Rango [desde, hasta) del mes local que contiene la fecha. */
+export const rangoDelMes = (fecha = new Date()) => {
+  const d = new Date(fecha);
+  return { desde: new Date(d.getFullYear(), d.getMonth(), 1), hasta: new Date(d.getFullYear(), d.getMonth() + 1, 1) };
+};
