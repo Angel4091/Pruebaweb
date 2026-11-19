@@ -91,6 +91,10 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 ## D-12 · NginX para el despliegue
 - **Fuentes:** los lineamientos permiten NginX o Apache; las clases usan NginX.
 - **Decisión:** NginX como proxy inverso, con sección de HTTPS (TLS 1.2 y 1.3).
+- **Aplicada (19 nov):** [`deploy/nginx.conf`](../deploy/nginx.conf) y un servicio de systemd para la API.
+  - La configuración usa `listen 443 ssl http2`, que funciona en NginX 1.24 (Ubuntu 24.04) y en las versiones nuevas.
+  - Los encabezados de seguridad de las páginas los pone NginX; los de `/api`, helmet, para no duplicarlos.
+  - Se recomienda desplegar todo en un solo servidor, como en clase, y se documenta la alternativa con servicios gratuitos separados.
 - **Fase:** 6.
 
 ## D-13 · Pantalla de inicio de sesión

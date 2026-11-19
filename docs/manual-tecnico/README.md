@@ -152,20 +152,19 @@ La **anulación** (`PATCH /ventas/:id/anular`) solo se permite en turnos abierto
 
 ## 5. Despliegue
 
-1. Crea la base en el servidor y aplica `npm run db:init` (y `npm run db:seed` si quieres datos de demo) con las variables de producción en `apps/backend/.env`.
-2. `npm run build` genera `apps/frontend/dist`.
-3. Sirve `apps/frontend/dist` con NginX o Apache y redirige `/api` al backend (`npm start`, puerto 3000).
+Los pasos completos y las opciones gratuitas están en el [README](../../README.md#-despliegue). Los archivos están en `deploy/`:
 
-Ejemplo de NginX:
+| Archivo | Qué hace |
+|---|---|
+| `deploy/nginx.conf` | Puerto 80: redirige a HTTPS y atiende la validación de Let's Encrypt. Puerto 443: TLS 1.2 y 1.3, HTTP/2, sirve `apps/frontend/dist` (con `try_files … /index.html` para las rutas de React), manda `/api/` a Express en `127.0.0.1:3000` con la IP real del cliente (`X-Forwarded-For`), comprime con gzip, guarda en caché un año los archivos de `/assets/` y agrega a las páginas HSTS, CSP, `nosniff`, `Referrer-Policy` y `Permissions-Policy`. |
+| `deploy/origenes-api.service` | Servicio de systemd: arranca la API con el servidor y la reinicia si se cae. |
 
-```nginx
-server {
-  listen 80;
-  root /var/www/origenes/apps/frontend/dist;
-  location / { try_files $uri /index.html; }
-  location /api/ { proxy_pass http://127.0.0.1:3000; }
-}
-```
+**La CSP de las páginas:** `script-src 'self'` (ningún script de otro sitio ni en línea); `style-src` permite `'unsafe-inline'` porque los componentes usan atributos `style` (por ejemplo, la máscara del logo y los colores de la marca) y Google Fonts; `img-src 'self' data:` porque el logo y las fotos subidas viajan en base64; `connect-src 'self'` porque la app solo habla con su propia API.
+
+**Cómo se probó (19 nov):** con NginX 1.24 (la versión de Ubuntu 24.04) en Docker, un certificado de prueba, el build real y la API local.
+- `nginx -t` pasa sin advertencias.
+- 21 comprobaciones: redirección 80 → 443, rutas de React, HTTP/2, TLS 1.1 rechazado y TLS 1.3 aceptado, HSTS, CSP, caché, gzip, proxy a `/api`, 401 sin token por HTTPS, encabezados de la API sin duplicar y un cuerpo de 5 MB rechazado con 413.
+- En el navegador, las 9 pantallas, la guía y la bitácora sin ninguna violación de la CSP, y una venta completa que descontó la receta del Latte.
 
 ## 6. Pruebas
 

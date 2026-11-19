@@ -41,7 +41,7 @@ Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias li
 │   │   ├── scripts/             # db-init.mjs y db-seed.mjs
 │   │   ├── src/
 │   │   │   ├── config/          # Variables de entorno, pool de PostgreSQL y datos de demo
-│   │   │   ├── middlewares/     # Validación y manejo central de errores
+│   │   │   ├── middlewares/     # Autenticación, roles, bitácora, validación y errores
 │   │   │   ├── modules/         # Un módulo por área: ventas, caja, inventario, productos,
 │   │   │   │                    #   compras, rrhh, pronostico, tablero, general
 │   │   │   │                    #   (cada uno con routes, controller, service y repository)
@@ -51,17 +51,18 @@ Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias li
 │   └── frontend/                # Aplicación React (Vite)
 │       └── src/
 │           ├── components/      # layout, ui, charts, decor (ilustraciones)
-│           ├── context/         # Estado global (sucursal, marca, toasts)
+│           ├── context/         # Sesión y estado global (sucursal, marca, toasts)
 │           ├── hooks/           # useFetch, useDebounce
 │           ├── pages/           # Un archivo por módulo
 │           ├── routes/          # React Router
 │           ├── services/        # Cliente HTTP y servicios por módulo
-│           └── utils/           # Formateadores
+│           └── utils/           # Formateadores, permisos por rol e IVA
 ├── database/
 │   ├── schema.sql               # Tablas, reglas (check, llaves foráneas) e índices
 │   ├── seeds/seed.mjs           # Datos de demo (menú, recetas, historial de 14 días)
 │   └── docker/                  # Crea la base de pruebas al levantar el contenedor
-├── docs/                        # Manuales, decisiones, clases, IEEE y seguimiento
+├── deploy/                      # nginx.conf (proxy inverso con HTTPS) y servicio de systemd
+├── docs/                        # Manuales, decisiones, clases, Postman, IEEE y seguimiento
 ├── docker-compose.yml           # PostgreSQL para desarrollo
 ├── CONTRIBUTING.md              # Gitflow y formato de commits
 └── package.json                 # Scripts para instalar y correr todo junto
@@ -113,7 +114,48 @@ Para producción, `npm run build` genera el frontend en `apps/frontend/dist` y `
 
 ### Variables de entorno
 
-Todas están explicadas en `apps/backend/.env.example`. El archivo `.env` nunca se sube al repositorio. En el frontend, `VITE_API_URL` permite apuntar a una API desplegada en otro dominio.
+Están explicadas en `apps/backend/.env.example` y `apps/frontend/.env.example`. Los archivos `.env` nunca se suben al repositorio. En el frontend, `VITE_API_URL` permite apuntar a una API desplegada en otro dominio.
+
+## 🌐 Despliegue
+
+### En un servidor propio (Ubuntu o Debian, como en clase)
+
+Requisitos: Node.js 22, PostgreSQL 16, NginX y un dominio que apunte a la IP del servidor.
+
+1. Clona el repositorio en `/var/www/origenes` y corre `npm run setup`.
+2. Crea `apps/backend/.env` con los valores de producción:
+   - `NODE_ENV=production` (además desactiva el reinicio de datos de demo).
+   - `CORS_ORIGIN=https://tu-dominio` (nunca `*`: la API no arranca así).
+   - `TRUST_PROXY=1`, porque NginX está delante y la API necesita la IP real para su límite de peticiones.
+   - `JWT_SECRET`: uno **nuevo**, generado con `openssl rand -hex 32`, distinto al de desarrollo.
+   - `DB_*`: los datos de la base del servidor (`DB_SSL=true` si la base está en la nube).
+3. `npm run db:init` crea las tablas (y `npm run db:seed` si quieres datos de demo).
+4. `npm run build` genera `apps/frontend/dist`.
+5. La API como servicio que arranca con el servidor: [`deploy/origenes-api.service`](deploy/origenes-api.service).
+6. NginX: copia [`deploy/nginx.conf`](deploy/nginx.conf), cambia el dominio y pide el certificado con `certbot` (los pasos están al inicio del archivo).
+7. Deja abiertos solo los puertos 22, 80 y 443 (por ejemplo, `sudo ufw allow OpenSSH` y `sudo ufw allow 'Nginx Full'`): el 3000 de Express y el 5432 de PostgreSQL no deben verse desde internet.
+8. Comprueba `https://tu-dominio/api/salud`.
+
+### HTTPS
+
+- El navegador solo habla con NginX, por **HTTPS en el puerto 443** con **TLS 1.2 o 1.3**. El puerto 80 redirige a HTTPS y solo atiende la validación del certificado.
+- El certificado es gratis con Let's Encrypt (`certbot`), que también lo renueva.
+- NginX agrega a las páginas HSTS (el navegador ya no intenta HTTP), una política de contenido (CSP) que solo permite scripts del propio sitio, y `nosniff`. Las respuestas de `/api` ya traen los encabezados de helmet.
+- **HTTPS protege el canal, no reemplaza el JWT ni los roles.** Cifra lo que viaja entre el navegador y el servidor (contraseñas, tokens, ventas) y confirma que te conectas al servidor correcto. Pero no decide quién puede hacer qué: por HTTPS, una petición sin token sigue recibiendo 401 y un cajero que pide compras sigue recibiendo 403.
+
+### Opciones gratuitas
+
+| Opción | Frontend | API (Express) | PostgreSQL |
+|---|---|---|---|
+| **Un solo servidor** (la de clase; usa `deploy/` tal cual) | NginX | systemd | en el mismo servidor |
+| **Servicios separados** | Netlify, Vercel o Cloudflare Pages | Render o Koyeb | Neon o Supabase |
+
+- **Un solo servidor:** sirve una máquina virtual gratuita, como las *Always Free* de Oracle Cloud o la `e2-micro` de Google Cloud, o el crédito para estudiantes de GitHub Student Developer Pack.
+- **Servicios separados:** cada servicio da HTTPS automático.
+  - En el frontend: `npm run build`, carpeta `apps/frontend/dist`, `VITE_API_URL` con la URL de la API y una regla que envíe todas las rutas a `index.html` (React Router).
+  - En la API: `CORS_ORIGIN` con el dominio del frontend y `TRUST_PROXY=1`.
+  - En la base: `DB_SSL=true`, y corre `npm run db:init` desde tu equipo apuntando a esa base.
+- Los planes gratis tienen límites: por ejemplo, la API de Render se apaga cuando nadie la usa y tarda en despertar, y algunas bases gratuitas se pausan por inactividad. Revisa los límites actuales antes de la entrega.
 
 ## 🌿 Flujo de trabajo (Gitflow)
 
