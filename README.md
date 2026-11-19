@@ -127,7 +127,7 @@ Formato de commits: `[gitmoji] [prefijo]: descripción` — por ejemplo `✨ fea
 
 - [Manual de usuario](docs/manual-usuario/README.md)
 - [Manual técnico](docs/manual-tecnico/README.md)
-- [Guía técnica de la API REST](docs/guia-tecnica/api-rest.md)
+- [Guía técnica de la API REST](docs/guia-tecnica/api-rest.md) y [colección de Postman](docs/postman/origenes-sv.postman_collection.json)
 - Informe IEEE: `docs/investigacion-ieee/`
 - [Seguimiento de tickets por integrante](docs/seguimiento/seguimiento.csv)
 - [Registro de decisiones](docs/decisiones.md)

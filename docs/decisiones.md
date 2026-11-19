@@ -101,6 +101,7 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 ## D-14 · IVA incluido en el precio
 - **Fuentes:** los lineamientos piden aplicar el 13 % de IVA; hoy el sistema lo suma encima del precio.
 - **Decisión:** los precios del menú incluyen IVA. La factura de consumidor final muestra el total y el IVA incluido; el crédito fiscal muestra el valor sin IVA, el 13 % y el total. Ejemplo: un café de $3.50 se cobra $3.50 (antes $3.96).
+- **Aplicada (19 nov):** el subtotal es la suma de cada línea ÷ 1.13 redondeada y el IVA es la diferencia con el total, así las líneas del CCF cuadran. El margen de los productos se calcula sobre el precio sin IVA. Las compras a proveedores siguen con el IVA aparte, porque así llega su crédito fiscal.
 - **Motivo:** así se emiten los comprobantes en El Salvador.
 - **Fase:** 5.
 
@@ -129,6 +130,7 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 ## D-19 · Quién registró y versión del registro
 - **Fuentes:** la clase 15 muestra en el detalle el usuario que registró, la fecha y la versión.
 - **Decisión:** ventas y compras guardan quién las registró y su versión; el ticket muestra "Atendió: …". Productos e insumos usan la versión para responder 409 si alguien edita con datos viejos.
+- **Aplicada (19 nov):** la versión se compara en el mismo `update` (`where version = $n`), así dos ediciones al mismo tiempo nunca se pisan. El historial de compras muestra quién registró cada factura.
 - **Fase:** 2 y 5.
 
 ## D-20 · Proteger el reinicio de datos
@@ -184,3 +186,19 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Decisión:** el token vive en `sessionStorage`: sobrevive a una recarga, pero se borra al cerrar la pestaña. Al cerrar sesión se vuelve a un login limpio, sin recordar la pantalla anterior, porque el siguiente turno puede ser de otro rol. Si la API responde 401, la app borra el token y vuelve al login con el aviso "Tu sesión terminó".
 - **Motivo:** que una sesión no quede abierta para la siguiente persona que use la caja.
 - **Fase:** 3.
+
+## D-30 · La bitácora se llena con un middleware
+- **Fuentes:** el prompt pide "historial/auditoría (quién cambió qué y cuándo)"; la tabla `bitacora` existe desde la Fase 2.
+- **Decisión:** un solo middleware (`registrarCambios`) registra cada POST, PUT, PATCH o DELETE que responde 2xx, con el usuario, la acción, el módulo, el registro y los datos enviados sin contraseñas ni imágenes. El login se registra aparte. Lo que falla no se registra. Si guardar en la bitácora falla, la operación del usuario sigue y el error queda en la consola del servidor.
+- **Motivo:** cubre todos los módulos sin tocar cada servicio, y es fácil de explicar en la defensa: un solo archivo decide qué se audita.
+- **Fase:** 5.
+
+## D-31 · Qué listados se paginan en el servidor
+- **Fuentes:** el prompt pide listados con filtros por query string y paginación.
+- **Decisión:** ventas, compras y bitácora (los que crecen todos los días) se paginan en el servidor y responden `{ datos, total, pagina, porPagina, paginas }`. Los catálogos (menú, insumos, clientes, proveedores, empleados) siguen devolviendo la lista completa con el filtro `?activo=`: son cortos y el POS los necesita completos.
+- **Fase:** 5.
+
+## D-32 · Un campo requerido que falta es 400
+- **Fuentes:** la guía de la API dice "400: parámetro faltante"; `requireFields` respondía 422.
+- **Decisión:** si falta un campo requerido, 400 (la petición está incompleta). 422 queda para datos que llegan pero no cumplen una regla (un NIT mal escrito, una cantidad negativa).
+- **Fase:** 5.

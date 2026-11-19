@@ -53,13 +53,20 @@ Los bloqueos (`select ... for update`) evitan que dos cajas vendan el último in
 | Límites | `app.js` | 300 peticiones por minuto por IP (`RATE_LIMIT_POR_MINUTO`); cuerpos JSON de 100 kb, salvo productos (1.5 MB) y configuración (3 MB) por las imágenes (D-09). |
 | Arranque | `server.js` | Sin un `JWT_SECRET` de 32 caracteres o más, o con `CORS_ORIGIN=*` en producción, la API no arranca. |
 
+### 1.4 Bitácora, versiones y paginación
+
+- **Bitácora** (`middlewares/bitacora.js`, `modules/bitacora`): el middleware `registrarCambios` envuelve `res.json`. Cuando un POST, PUT, PATCH o DELETE responde 2xx, guarda en la tabla `bitacora` el usuario, la acción (método o última parte de la ruta), el módulo (primera parte de la ruta), el id afectado y un resumen del cuerpo sin contraseñas ni imágenes. Se guarda justo antes de responder; si la bitácora falla, solo se anota en la consola del servidor y la operación sigue (D-30). El login se registra en `auth.controller.js`.
+- **Versión** (D-19): `guardarProducto` y `guardarInsumo` hacen `update … where id = $1 and version = $n`. Si nadie más lo cambió, la versión sube en 1; si no se actualiza ninguna fila, el servicio responde 409 con `registroDesactualizado`.
+- **Paginación** (`utils/filtros.js`): `leerPaginacion`, `leerRangoFechas` y `leerActivo` validan la query string (400 si no tiene sentido). Los repositorios de ventas, compras y bitácora hacen dos consultas con los mismos filtros: `count(*)` y la página con `limit`/`offset` (D-31).
+- **Bajas lógicas**: clientes, proveedores e insumos se desactivan con `DELETE` (`activo = false`). Un cliente o proveedor desactivado ya no se puede usar en una venta o compra (422); un insumo no se desactiva mientras lo use la receta de un platillo activo (409).
+
 ## 2. Lógica de negocio principal
 
 ### 2.1 Ventas y facturación (`ventas.service.js`)
 1. Verifica que la caja tenga un turno abierto (409 si está cerrada).
 2. Valida comprobante (`FCF` o `CCF`), tipo de orden y método de pago. El CCF exige cliente con NIT y NRC (422).
 3. Agrupa y valida los items (cantidades enteras positivas, productos activos).
-4. `calcularTotales`: subtotal, **IVA = subtotal × 0.13** y total, redondeados a 2 decimales.
+4. `calcularTotales` (con `desglosarIva` de `utils/money.js`): los precios incluyen IVA (D-14). **Total** = suma de las líneas; **subtotal** = suma de cada línea ÷ 1.13 redondeada; **IVA** = total − subtotal. Así las líneas sin IVA del crédito fiscal siempre suman el subtotal.
 5. En efectivo, el monto recibido no puede ser menor al total; se calcula el cambio.
 6. `calcularRequerimientos` convierte los items en insumos (por receta) y unidades de reventa; `validarExistencias` responde 409 con el detalle de faltantes.
 7. Se asigna el correlativo por sucursal y tipo: `FCF-01-000123`, `CCF-02-000045`.
@@ -167,4 +174,6 @@ server {
 - IVA del 13 %, descuento de receta del Latte grande, correlativos, validación de CCF, faltantes de stock, anulación, apertura doble y cuadre de caja.
 - Una venta rechazada no consume el correlativo ni el inventario (transacción).
 - Rutas de la API: salud, menú, venta (201), sucursal inexistente (404), parámetro faltante (400), JSON mal formado (400) y ruta inexistente (404).
+- Reglas de la Fase 5 (`reglas.test.js`): IVA incluido en FCF y CCF, margen sobre el precio sin IVA, quién atendió y quién registró la compra, 409 por versión vieja en productos e insumos, alta, edición y baja de clientes, insumos en uso (409), proveedores desactivados (422 al comprar), paginación y filtros de ventas y compras (incluidos los 400), y la bitácora (venta, anulación, login, sin contraseñas, lo que falla no se registra, solo admin).
+- Colección de Postman (`docs/postman`): 35 peticiones con 42 pruebas de punta a punta.
 - Seguridad (`seguridad.test.js`): login correcto e incorrecto (mismo 401 para correo inexistente), tokens con otra firma, otra audiencia, vencidos o sin algoritmo (401), permisos de cada rol (403), acceso a otra sucursal (403), reglas de usuarios (correo repetido, contraseña corta, no desactivarse a sí mismo, sesión inválida al desactivar), encabezados de helmet, límite de peticiones y cuerpo de más de 100 kb (413).
