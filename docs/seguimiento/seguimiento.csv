@@ -1,15 +1,15 @@
 ﻿ticket,fase,area,integrante,descripcion,rama,estado,pull_request,inicio,fin,notas
 OP-000,0,OP,Angel4091,"Agrega lineamientos, clases, registro de decisiones, flujo de ramas y este seguimiento",feature/angel/OP-000,en revisión,,2026-11-18,,
 OP-001,1,OP,Angel4091,"Mueve backend y frontend a apps/ y agrega los scripts setup, dev, db:seed, build y start (db:init llega con DB-003)",feature/angel/OP-001,en revisión,,2026-11-18,,"D-08; reasignado del Integrante 8"
-DB-001,2,DB,Integrante 1,"Escribe database/schema.sql con checks, llaves foráneas, índices, bitácora y versión",,pendiente,,,,"D-06, D-19"
-DB-002,2,DB,Integrante 1,Escribe el seed en SQL y crea los usuarios con bcrypt desde SEED_PASSWORD,,pendiente,,,,D-04
-DB-003,2,DB,Integrante 1,"Agrega db:init, db:seed, el pool de pg y docker-compose solo para PostgreSQL",,pendiente,,,,D-11
-BE-010,2,BE,Integrante 3,Repositorio de ventas y registro de la venta en una transacción,,pendiente,,,,
-BE-012,2,BE,Integrante 3,Repositorio de caja y cierre de turno en una transacción,,pendiente,,,,
-BE-020,2,BE,Integrante 4,"Repositorios de inventario y recetas en g, ml y unidad",,pendiente,,,,D-15
-BE-021,2,BE,Integrante 4,Repositorio de compras; compra y cuenta por pagar en una transacción,,pendiente,,,,
-BE-030,2,BE,Integrante 5,Repositorio de RR. HH. y generación de planilla en una transacción,,pendiente,,,,
-BE-031,2,BE,Integrante 5,Pronóstico leyendo de PostgreSQL,,pendiente,,,,D-16
+DB-001,2,DB,Angel4091,"Escribe database/schema.sql con checks, llaves foráneas, índices, bitácora, versión y orden de alta",feature/angel/DB-001,en revisión,,2026-11-18,,"D-06, D-19; reasignado del Integrante 1"
+DB-002,2,DB,Angel4091,Carga los datos de demo en PostgreSQL y crea un usuario por rol con bcrypt desde SEED_PASSWORD,feature/angel/DB-001,en revisión,,2026-11-18,,"D-04, D-24; reasignado del Integrante 1"
+DB-003,2,DB,Angel4091,"Agrega db:init, db:seed, el pool de pg con transacciones y docker-compose solo para PostgreSQL",feature/angel/DB-001,en revisión,,2026-11-18,,"D-11, D-25; reasignado del Integrante 1"
+BE-010,2,BE,Angel4091,Repositorio de ventas y registro de la venta en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 3
+BE-012,2,BE,Angel4091,Repositorio de caja y cierre de turno en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 3
+BE-020,2,BE,Angel4091,"Repositorios de inventario, productos y recetas",feature/angel/BE-020,en revisión,,2026-11-18,,"D-15, D-23; reasignado del Integrante 4"
+BE-021,2,BE,Angel4091,Repositorio de compras; compra y cuenta por pagar en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 4
+BE-030,2,BE,Angel4091,Repositorio de RR. HH. y generación de planilla en una transacción,feature/angel/BE-020,en revisión,,2026-11-18,,reasignado del Integrante 5
+BE-031,2,BE,Angel4091,Pronóstico y tablero de inicio leyendo de PostgreSQL,feature/angel/BE-020,en revisión,,2026-11-18,,D-16; reasignado del Integrante 5
 BE-001,3,BE,Integrante 2,Módulo auth: login y me con bcrypt y JWT (HS256 con issuer y audience),,pendiente,,,,
 BE-002,3,BE,Integrante 2,"Middlewares de autenticación (401), roles (403) y sucursal",,pendiente,,,,D-04
 BE-003,3,BE,Integrante 2,"helmet, rate-limit, límites del JSON, health y reinicio de datos solo para admin",,pendiente,,,,"D-09, D-20"
