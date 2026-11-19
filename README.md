@@ -11,13 +11,25 @@ Proyecto de Cátedra de **Programación Web — Ciclo 02, 2026**. Corresponde al
 | Módulo | Qué resuelve |
 |---|---|
 | **Inicio** | Ventas del día, órdenes, ticket promedio, estado de cajas, productos más vendidos, ventas por sucursal y alertas. |
-| **Punto de venta (POS)** | Toma ágil de pedidos (comer aquí, para llevar, delivery). Emite **Factura de Consumidor Final (FCF)** y **Comprobante de Crédito Fiscal (CCF)** con correlativos por sucursal y **13 % de IVA**. Cobro en efectivo (con cambio), tarjeta o **Bitcoin (Chivo Wallet)**. |
+| **Punto de venta (POS)** | Toma ágil de pedidos (comer aquí, para llevar, delivery). Emite **Factura de Consumidor Final (FCF)** y **Comprobante de Crédito Fiscal (CCF)** con correlativos por sucursal y **13 % de IVA incluido en el precio** (desglosado en el CCF). Cobro en efectivo (con cambio), tarjeta o **Bitcoin (Chivo Wallet)**. |
 | **Inventario y recetas** | Cada venta de un producto elaborado **descuenta automáticamente los insumos de su receta** (ej. *Latte grande*: 18 g de café, 250 ml de leche, 1 vaso de 16 oz, 1 tapadera y 1 viñeta). Menú de **14 productos elaborados** + **4 productos empacados de reventa**. Alertas de stock mínimo, entradas de inventario y costo promedio ponderado. |
 | **Compras y proveedores** | Registro de facturas de compra de insumos (afectan inventario) y de gastos operativos; **cuentas por pagar** con abonos y vencimientos. |
 | **Caja y turnos** | Apertura con fondo inicial por denominación, resumen en vivo y **cierre con cuadre** de efectivo, tarjeta y Bitcoin; historial de turnos. |
 | **RR. HH. y planilla** | Gestión de empleados (baristas, cajeros, cocineros, gerentes) y **planilla quincenal** con **ISSS 3 %** (techo de $1,000), **AFP 7.25 %** y **retención de renta** según la tabla quincenal. |
 | **Pronóstico** | Consumo proyectado por insumo con promedio móvil, días de cobertura, alertas de faltantes y **órdenes de compra sugeridas** por proveedor. |
 | **Identidad visual** | Logo, nombre, eslogan, paleta de colores, tipografías, sombras, bordes, animaciones y modo oscuro, aplicados en vivo a toda la app. |
+| **Administración** | Usuarios con su rol y sucursal, bitácora de quién cambió qué y cuándo, y datos de demostración. |
+
+## 👥 Roles y usuarios de prueba
+
+| Rol | Qué hace | Usuario de prueba |
+|---|---|---|
+| Administrador | Todo, en todas las sucursales: además Identidad visual y Administración | `admin@origenes.test` |
+| Gerente | Su sucursal: POS, inventario, compras, caja, personal y pronóstico (la planilla la genera y paga el admin) | `gerente@origenes.test` (San Miguel) |
+| Cajero | POS, caja de su turno e inventario de consulta | `cajero@origenes.test` (Central) |
+| Barista | POS e inventario y recetas de consulta | `barista@origenes.test` (Central) |
+
+Todos usan la contraseña de `SEED_PASSWORD` de tu `apps/backend/.env`. El detalle por rol está en el [manual de usuario](docs/manual-usuario/README.md#paso-a-paso-por-rol).
 
 ### Identidad maya
 
@@ -30,7 +42,9 @@ Las fotos de platillos e insumos provienen de Wikimedia Commons con licencias li
 - **Frontend:** React 19 + Vite, React Router, Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`, `useContext`, hooks propios), Tailwind CSS 4, íconos Lucide.
 - **Backend:** Node.js + Express 5, API REST organizada por módulos; cada módulo tiene rutas → controlador → servicio → repositorio.
 - **Base de datos:** PostgreSQL 16 con el driver `pg`, SQL parametrizado y sin ORM. Las ventas, compras, cierres de caja y planillas se guardan en transacciones. Para desarrollo se levanta con Docker (`docker-compose.yml`).
-- **Pruebas:** `node:test` contra una base de pruebas separada (planilla, IVA, recetas, correlativos, transacciones, cuadre de caja y rutas de la API).
+- **Seguridad:** bcrypt, JWT (HS256), roles y sucursal en cada ruta, helmet, límite de peticiones y bitácora de auditoría.
+- **Pruebas:** 75 con `node:test` contra una base separada, y una colección de Postman.
+- **Despliegue:** NginX como proxy inverso con HTTPS ([`deploy/`](deploy/)).
 
 ## 📁 Estructura del repositorio
 
@@ -112,6 +126,19 @@ npm test
 
 Para producción, `npm run build` genera el frontend en `apps/frontend/dist` y `npm start` levanta la API. `npm run db:down` detiene el contenedor de PostgreSQL sin borrar los datos.
 
+### Scripts
+
+| Script | Qué hace |
+|---|---|
+| `npm run setup` | Instala las dependencias de la raíz, del backend y del frontend (con los lockfiles) |
+| `npm run dev` | Levanta la API (puerto 3000) y la web (puerto 5173) juntas |
+| `npm run db:up` / `npm run db:down` | Levanta o detiene PostgreSQL en Docker (los datos se conservan) |
+| `npm run db:init` | Crea las tablas desde `database/schema.sql` (se puede correr varias veces) |
+| `npm run db:seed` | Carga los datos de demo y los usuarios de prueba (borra lo registrado) |
+| `npm test` | Corre las pruebas del backend contra la base `origenes_test` |
+| `npm run build` | Compila el frontend en `apps/frontend/dist` |
+| `npm start` | Levanta la API para producción |
+
 ### Variables de entorno
 
 Están explicadas en `apps/backend/.env.example` y `apps/frontend/.env.example`. Los archivos `.env` nunca se suben al repositorio. En el frontend, `VITE_API_URL` permite apuntar a una API desplegada en otro dominio.
@@ -167,9 +194,14 @@ Formato de commits: `[gitmoji] [prefijo]: descripción` — por ejemplo `✨ fea
 
 ## 📚 Documentación
 
-- [Manual de usuario](docs/manual-usuario/README.md)
+- [Manual de usuario](docs/manual-usuario/README.md): cada módulo y el paso a paso de cada rol
+- [Arquitectura](docs/arquitectura.md): diagramas (Mermaid) y modelo entidad-relación
 - [Manual técnico](docs/manual-tecnico/README.md)
-- [Guía técnica de la API REST](docs/guia-tecnica/api-rest.md) y [colección de Postman](docs/postman/origenes-sv.postman_collection.json)
+- [Endpoints](docs/endpoints.md): las 68 rutas con su rol, cuerpo y respuestas
+- [Guía de la API REST](docs/guia-tecnica/api-rest.md) y [colección de Postman](docs/postman/origenes-sv.postman_collection.json)
+- [Requisitos técnicos](docs/requisitos-tecnicos.md): dónde se cumple cada uno, con archivo y línea
+- [Guía de defensa](docs/guia-defensa.md): qué estudia cada integrante y preguntas probables
+- [Uso de IA](docs/uso-de-ia.md)
 - Informe IEEE: `docs/investigacion-ieee/`
 - [Seguimiento de tickets por integrante](docs/seguimiento/seguimiento.csv)
 - [Registro de decisiones](docs/decisiones.md)
@@ -177,4 +209,4 @@ Formato de commits: `[gitmoji] [prefijo]: descripción` — por ejemplo `✨ fea
 
 ## 🤖 Declaración de uso de IA
 
-En el desarrollo se utilizó un asistente de IA (Claude, de Anthropic) como apoyo para generar código y documentación. Todo uso de IA se declara en la bibliografía del informe, y cada integrante del equipo debe comprender y poder explicar el código entregado.
+El código, las pruebas y la documentación se hicieron con apoyo de Claude Code (Anthropic, modelo Claude Opus 5.5). [`docs/uso-de-ia.md`](docs/uso-de-ia.md) explica qué hizo la IA, qué hizo el equipo, cómo se verificó y cómo citarlo en el informe IEEE. Cada integrante debe comprender y poder explicar su parte del código ([guía de defensa](docs/guia-defensa.md)).

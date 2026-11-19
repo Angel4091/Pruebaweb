@@ -206,3 +206,12 @@ Cada decisión indica las fuentes que chocaban, qué se eligió, por qué y en q
 - **Fuentes:** la guía de la API dice "400: parámetro faltante"; `requireFields` respondía 422.
 - **Decisión:** si falta un campo requerido, 400 (la petición está incompleta). 422 queda para datos que llegan pero no cumplen una regla (un NIT mal escrito, una cantidad negativa).
 - **Fase:** 5.
+
+## D-33 · Dónde queda cada documento
+- **Fuentes:** el prompt pide `docs/manual-usuario.md`, `docs/endpoints.md` y `docs/seguimiento.csv`; el repositorio ya tenía las carpetas `docs/manual-usuario/`, `docs/guia-tecnica/` y `docs/seguimiento/`.
+- **Decisión:**
+  - Se conservan las carpetas del equipo: `docs/manual-usuario/README.md` y `docs/seguimiento/seguimiento.csv` (D-10).
+  - Se agregan con el nombre que pide el prompt `docs/arquitectura.md`, `docs/endpoints.md`, `docs/requisitos-tecnicos.md`, `docs/uso-de-ia.md` y `docs/guia-defensa.md`.
+  - La lista de rutas vive solo en `endpoints.md`; `guia-tecnica/api-rest.md` queda con las convenciones, para no mantener la misma tabla en dos lugares.
+- **Pendiente del equipo:** exportar el seguimiento a Excel con los nombres reales de los integrantes (los lineamientos lo califican) y escribir el informe IEEE fuera del repositorio.
+- **Fase:** 7.

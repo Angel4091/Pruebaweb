@@ -29,6 +29,41 @@ Este manual explica cómo usar cada módulo del sistema en el día a día de una
 3. **Revisar alertas** de inventario y registrar compras si hace falta.
 4. **Cerrar turno** contando el efectivo.
 
+## Paso a paso por rol
+
+### Cajero
+
+1. Inicia sesión con tu correo. Verás Inicio, Punto de venta, Inventario y Caja, siempre de tu sucursal.
+2. **Caja:** elige tu caja, cuenta el fondo por billete y toca **Confirmar apertura**. El turno queda a tu nombre.
+3. **Punto de venta:** toma cada pedido, elige *Factura* o *Crédito fiscal* y cobra. Entrega el comprobante impreso.
+4. **Inventario:** revisa las existencias y las alertas de stock (solo consulta). Si algo se agota, avisa al gerente.
+5. Al terminar: en **Caja**, cuenta el efectivo, escríbelo y toca **Cerrar turno**. Revisa la diferencia por método de pago.
+6. Toca tus iniciales (arriba a la derecha) y **Cerrar sesión**.
+
+### Barista
+
+1. Inicia sesión. Verás Inicio, Punto de venta e Inventario de tu sucursal.
+2. **Punto de venta:** toma pedidos y cobra en una caja abierta. Si la caja está cerrada, pide a un cajero o al gerente que la abra.
+3. **Inventario → Ver recetas:** consulta los ingredientes y cantidades de cada platillo. Puedes ver existencias y alertas, pero no modificarlas.
+
+### Gerente
+
+1. Inicia sesión. Trabajas solo con tu sucursal: verás todos los módulos menos Identidad visual y Administración.
+2. **Inicio:** revisa las ventas del día, las cajas abiertas y las alertas.
+3. **Inventario:** registra entradas, crea o edita insumos y platillos con su receta, y desactiva lo que ya no se usa.
+4. **Compras:** registra las facturas de insumos (suben el inventario) y los gastos; abona a las cuentas por pagar.
+5. **Pronóstico:** revisa qué insumos no alcanzan y genera los pedidos sugeridos; luego recíbelos en Compras.
+6. **Personal:** agrega, edita o da de baja empleados de tu sucursal y revisa la planilla de tu personal. El administrador la genera y la paga.
+7. **Caja:** puedes abrir y cerrar cualquier caja de tu sucursal.
+
+### Administrador
+
+1. Hace todo lo que hace el gerente, en cualquier sucursal: elígela en la barra superior.
+2. **Personal → Planilla:** toca **Generar planilla** cada quincena y **Marcar como pagada** al pagar.
+3. **Identidad visual:** cambia el logo, los colores y las tipografías del sistema.
+4. **Administración → Accesos:** crea los usuarios del personal con su rol y sucursal, y quita el acceso a quien ya no trabaja.
+5. **Administración → Bitácora:** revisa quién hizo cada cambio, filtrando por usuario, módulo y fechas.
+
 ## 1. Caja y turnos
 
 **Abrir la caja**
